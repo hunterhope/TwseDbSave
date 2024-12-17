@@ -5,6 +5,8 @@
 
 module TwseDbSaveTest {
     requires TwseDbSave;
+    requires JsonRequest;
     requires org.junit.jupiter.api;
+    requires org.mockito;
     opens com.hunterhope.twsedbsave.service.test;
 }

@@ -4,10 +4,11 @@
  */
 package com.hunterhope.twsedbsave.service.test;
 
+import com.hunterhope.jsonrequest.JsonRequestService;
 import com.hunterhope.twsedbsave.service.TwseDbService;
-import com.hunterhope.twsedbsave.service.exception.TwseDbSaveException;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import org.mockito.Mockito;
 
 /**
  *
@@ -22,14 +23,18 @@ public class TwseDbServiceTest {
      * Test of crawl method, of class TwseDbService.
      */
     @Test
-    public void testCrawl() throws TwseDbSaveException {
-        System.out.println("crawl");
+    public void testCrawl_two_month_data_real_send_request_2times() throws Exception {
+        System.out.println("crawl two month data");        
+        //準備假物件
+        JsonRequestService jrs=Mockito.mock(JsonRequestService.class);
+        //準備物件
         String stockId = "2323";
-        int months = 1;       
-        TwseDbService instance = new TwseDbService();
-        instance.crawl(stockId, months);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        int months = 2; 
+        TwseDbService tds = new TwseDbService(jrs);
+        //跑起來
+        tds.crawl(stockId, months);
+        //驗證
+        Mockito.verify(jrs, Mockito.times(2)).getData(Mockito.any(), Mockito.any());
     }
 
     /**

@@ -21,8 +21,16 @@ import java.util.Optional;
  */
 public class TwseDbService {
 
-    private JsonRequestService jrs;
+    private final JsonRequestService jrs;
     private final String TWSE_STOCK_PRICE_BASE_URL = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY";//?date=20240331&stockNo=2323&response=json
+
+    public TwseDbService() {
+        this.jrs = new JsonRequestService();
+    }
+
+    public TwseDbService(JsonRequestService jrs) {
+        this.jrs = jrs;
+    }
 
     public void crawl(String stockId, int months) throws TwseDbSaveException {
         //建立UrlAndQueryString
