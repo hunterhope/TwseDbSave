@@ -58,7 +58,7 @@ public class TwseDbServiceTest {
         Mockito.when(jrs.getData(Mockito.any(),Mockito.eq(OneMonthPrice.class))).thenReturn(opt);
         //準備物件
         String stockId = "2323";
-        int months = 1;
+        int months = 2;
         TwseDbService tds = new TwseDbService(jrs, saveDao);
         //跑起來
         tds.crawl(stockId,LocalDate.now(), months);

@@ -13,6 +13,7 @@ import java.util.Objects;
  * @author hunterhope
  */
 public class StockEveryDayInfo {
+    public static final String TABLE_NAME_PREFIX="STOCK_";
     private String date;
     private String volume;
     private String open;
