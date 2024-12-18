@@ -39,13 +39,19 @@ public class TwseDbService {
         this.saveDao = saveDao;
     }
 
-    public void crawl(String stockId, int months) throws TwseDbSaveException {
+    /**
+     * 上網爬指定股票指定開始日期，爬指定幾個月份
+     * @param stockId 股票代碼
+     * @param stateDate 開始日期
+     * @param months 開始日期後爬幾個月(包含開始日期月份)
+     */
+    public void crawl(String stockId,LocalDate stateDate,int months)throws TwseDbSaveException{
         //建立UrlAndQueryString
         UrlAndQueryString qs = new UrlAndQueryString(TWSE_STOCK_PRICE_BASE_URL);
         qs.addParam("stockNo", stockId);
         qs.addParam("response", "json");
         for (int i = 0; i < months; i++) {
-            qs.addParam("date", LocalDate.now().minusMonths(i).format(DateTimeFormatter.BASIC_ISO_DATE));
+            qs.addParam("date", stateDate.minusMonths(i).format(DateTimeFormatter.BASIC_ISO_DATE));
             try {
                 //上網爬資料
                 Optional<OneMonthPrice> opt = jrs.getData(qs, OneMonthPrice.class);
@@ -62,7 +68,6 @@ public class TwseDbService {
                 throw new TwseDbSaveException(ex);
             }
         }
-
     }
 
     private List<StockEveryDayInfo> convert(OneMonthPrice omp) {

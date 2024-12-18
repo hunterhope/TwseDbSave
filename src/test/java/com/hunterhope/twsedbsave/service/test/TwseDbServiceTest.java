@@ -9,6 +9,7 @@ import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.dao.impl.SaveDaoImpl;
 import com.hunterhope.twsedbsave.service.TwseDbService;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ public class TwseDbServiceTest {
         int months = 2;
         TwseDbService tds = new TwseDbService(jrs, null);
         //跑起來
-        tds.crawl(stockId, months);
+        tds.crawl(stockId,LocalDate.now(), months);
         //驗證
         Mockito.verify(jrs, Mockito.times(2)).getData(Mockito.any(), Mockito.any());
     }
@@ -60,7 +61,7 @@ public class TwseDbServiceTest {
         int months = 1;
         TwseDbService tds = new TwseDbService(jrs, saveDao);
         //跑起來
-        tds.crawl(stockId, months);
+        tds.crawl(stockId,LocalDate.now(), months);
         //驗證
         Mockito.verify(saveDao, Mockito.times(1)).createTable(Mockito.any());
         Mockito.verify(saveDao, Mockito.times(1)).save(Mockito.any(), Mockito.any());
