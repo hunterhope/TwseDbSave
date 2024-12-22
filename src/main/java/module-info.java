@@ -8,9 +8,10 @@ module TwseDbSave {
     requires com.google.gson;
     requires com.google.errorprone.annotations;
     exports com.hunterhope.twsedbsave.service;
-    exports com.hunterhope.twsedbsave.service.data;
     exports com.hunterhope.twsedbsave.service.exception;
-    exports com.hunterhope.twsedbsave.dao;
-    exports com.hunterhope.twsedbsave.entity;
-    exports com.hunterhope.twsedbsave.dao.impl;
+    exports com.hunterhope.twsedbsave.service.data to TwseDbSaveTest;    
+    exports com.hunterhope.twsedbsave.dao to TwseDbSaveTest;
+    exports com.hunterhope.twsedbsave.entity to TwseDbSaveTest;
+    exports com.hunterhope.twsedbsave.dao.impl to TwseDbSaveTest;
+    exports com.hunterhope.twsedbsave.other to TwseDbSaveTest;
 }

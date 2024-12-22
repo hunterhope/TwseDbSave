@@ -8,6 +8,7 @@ import com.hunterhope.jsonrequest.JsonRequestService;
 import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.dao.impl.SaveDaoImpl;
 import com.hunterhope.twsedbsave.service.TwseDbService;
+import com.hunterhope.twsedbsave.other.WaitClock;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
 import java.time.LocalDate;
@@ -35,6 +36,7 @@ public class TwseDbServiceTest {
         //準備假物件
         JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
         SaveDao saveDao = Mockito.mock(SaveDaoImpl.class);
+        WaitClock waitClock = Mockito.mock(WaitClock.class);
         OneMonthPrice omp = new OneMonthPrice();
         omp.setStat("ok");
         omp.setData(List.of());
@@ -42,7 +44,7 @@ public class TwseDbServiceTest {
         //準備物件
         String stockId = "2323";
         int months = 2;
-        TwseDbService tds = new TwseDbService(jrs, saveDao);
+        TwseDbService tds = new TwseDbService(jrs, saveDao,waitClock);
         //跑起來
         tds.crawl(stockId, LocalDate.now(), months);
         //驗證
@@ -59,6 +61,7 @@ public class TwseDbServiceTest {
         //準備假物件
         JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
         SaveDao saveDao = Mockito.mock(SaveDaoImpl.class);
+        WaitClock waitClock = Mockito.mock(WaitClock.class);
         OneMonthPrice omp = new OneMonthPrice();
         omp.setStat("ok");
         omp.setData(List.of());
@@ -66,7 +69,7 @@ public class TwseDbServiceTest {
         //準備物件
         String stockId = "2323";
         int months = 2;
-        TwseDbService tds = new TwseDbService(jrs, saveDao);
+        TwseDbService tds = new TwseDbService(jrs, saveDao,waitClock);
         //跑起來
         tds.crawl(stockId, LocalDate.now(), months);
         //驗證
@@ -84,13 +87,14 @@ public class TwseDbServiceTest {
         //準備假物件
         JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
         SaveDao saveDao = Mockito.mock(SaveDaoImpl.class);
+        WaitClock waitClock = Mockito.mock(WaitClock.class);
         OneMonthPrice omp = new OneMonthPrice();
         omp.setStat("沒有符合的資料");
         Mockito.when(jrs.getData(Mockito.any(), Mockito.eq(OneMonthPrice.class))).thenReturn(omp);
         //準備物件
         String stockId = "2323";
         int months = 2;
-        TwseDbService tds = new TwseDbService(jrs, saveDao);
+        TwseDbService tds = new TwseDbService(jrs, saveDao,waitClock);
         try {
             //跑起來
             tds.crawl(stockId, LocalDate.now(), months);
@@ -99,7 +103,6 @@ public class TwseDbServiceTest {
         //驗證
         Mockito.verify(saveDao, Mockito.times(1)).createTable(Mockito.any());
         Mockito.verify(saveDao, Mockito.times(0)).save(Mockito.any(), Mockito.any());
-
     }
 
     /**

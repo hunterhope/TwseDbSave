@@ -4,6 +4,7 @@
  */
 package com.hunterhope.twsedbsave.service;
 
+import com.hunterhope.twsedbsave.other.WaitClock;
 import com.hunterhope.jsonrequest.JsonRequestService;
 import com.hunterhope.jsonrequest.UrlAndQueryString;
 import com.hunterhope.jsonrequest.exception.DataClassFieldNameErrorException;
@@ -31,15 +32,17 @@ public class TwseDbService {
     private final JsonRequestService jrs;
     private final SaveDao saveDao;
     private final String TWSE_STOCK_PRICE_BASE_URL = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY";//?date=20240331&stockNo=2323&response=json
-
+    private final WaitClock waitClock;
     public TwseDbService() {
         this.jrs = new JsonRequestService();
         this.saveDao = null;
+        this.waitClock=new WaitClock();
     }
 
-    public TwseDbService(JsonRequestService jrs, SaveDao saveDao) {
+    public TwseDbService(JsonRequestService jrs, SaveDao saveDao,WaitClock waitClock1) {
         this.jrs = jrs;
         this.saveDao = saveDao;
+        this.waitClock=waitClock1;
     }
 
     /**
@@ -77,7 +80,7 @@ public class TwseDbService {
             }
             //每次上網爬資料間隔5~10秒
             if (months > 1) {//只抓取1個月則不用等
-                waitForSecurity();
+                waitClock.waitForSecurity(5,11);
             }
         }
     }
