@@ -8,10 +8,12 @@ import com.hunterhope.jsonrequest.JsonRequestService;
 import com.hunterhope.jsonrequest.UrlAndQueryString;
 import com.hunterhope.jsonrequest.exception.DataClassFieldNameErrorException;
 import com.hunterhope.jsonrequest.exception.NoInternetException;
+import com.hunterhope.jsonrequest.exception.ResponseEmptyException;
 import com.hunterhope.jsonrequest.exception.ServerMaintainException;
 import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
+import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
 import com.hunterhope.twsedbsave.service.exception.TwseDbSaveException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -46,9 +48,11 @@ public class TwseDbService {
      * @param stockId 股票代碼
      * @param stateDate 開始日期
      * @param months 開始日期後爬幾個月(包含開始日期月份)
+     * @throws TwseDbSaveException 包裝底層例外用
+     * @throws NotMatchDataException 查詢回來如果沒有符合的資料，有可能是此股票代號錯誤，或沒有該股票的交易紀錄了
      */
-    public void crawl(String stockId, LocalDate stateDate, int months) throws TwseDbSaveException {
-        String tableName = StockEveryDayInfo.TABLE_NAME_PREFIX+stockId;
+    public void crawl(String stockId, LocalDate stateDate, int months) throws TwseDbSaveException, NotMatchDataException {
+        String tableName = StockEveryDayInfo.TABLE_NAME_PREFIX + stockId;
         //建立表格
         saveDao.createTable(tableName);
         //建立UrlAndQueryString
@@ -59,31 +63,33 @@ public class TwseDbService {
             qs.addParam("date", stateDate.minusMonths(i).format(DateTimeFormatter.BASIC_ISO_DATE));
             try {
                 //上網爬資料
-                Optional<OneMonthPrice> opt = jrs.getData(qs, OneMonthPrice.class);
-                if (opt.isPresent()) {
+                OneMonthPrice omp = jrs.getData(qs, OneMonthPrice.class);
+                if (omp.hasData()) {
                     //轉換成資料庫表格形式
-                    List<StockEveryDayInfo> data = convert(opt.get());
+                    List<StockEveryDayInfo> data = convert(omp);
                     //存入資料庫
                     saveDao.save(tableName, data);
+                } else {
+                    throw new NotMatchDataException(omp.getStat());
                 }
-
-            } catch (NoInternetException | ServerMaintainException | DataClassFieldNameErrorException ex) {
+            } catch (NoInternetException | ServerMaintainException | DataClassFieldNameErrorException | ResponseEmptyException ex) {
                 throw new TwseDbSaveException(ex);
             }
             //每次上網爬資料間隔5~10秒
-            if(months>1){//只抓取1個月則不用等
+            if (months > 1) {//只抓取1個月則不用等
                 waitForSecurity();
-            }                     
+            }
         }
     }
 
-    private void waitForSecurity(){
+    private void waitForSecurity() {
         Random r = new Random();
         try {
-            Thread.sleep(r.nextLong(5, 11)*1000);
+            Thread.sleep(r.nextLong(5, 11) * 1000);
         } catch (InterruptedException ex) {
         }
     }
+
     private List<StockEveryDayInfo> convert(OneMonthPrice omp) {
         return omp.getData().stream()
                 .map(items -> {

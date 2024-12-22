@@ -18,6 +18,9 @@ public class OneMonthPrice {
     private List<String> fields;
     private List<List<String>> data;
 
+    public boolean hasData(){
+        return "OK".equalsIgnoreCase(stat) && data!=null;
+    }
     public String getStat() {
         return stat;
     }

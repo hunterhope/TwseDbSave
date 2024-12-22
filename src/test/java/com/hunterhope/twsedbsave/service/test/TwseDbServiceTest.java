@@ -9,6 +9,7 @@ import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.dao.impl.SaveDaoImpl;
 import com.hunterhope.twsedbsave.service.TwseDbService;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
+import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -33,13 +34,19 @@ public class TwseDbServiceTest {
         System.out.println("testCrawl_two_month_data_real_send_request_2times");
         //準備假物件
         JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
+        SaveDao saveDao = Mockito.mock(SaveDaoImpl.class);
+        OneMonthPrice omp = new OneMonthPrice();
+        omp.setStat("ok");
+        omp.setData(List.of());
+        Mockito.when(jrs.getData(Mockito.any(), Mockito.eq(OneMonthPrice.class))).thenReturn(omp);
         //準備物件
         String stockId = "2323";
         int months = 2;
-        TwseDbService tds = new TwseDbService(jrs, null);
+        TwseDbService tds = new TwseDbService(jrs, saveDao);
         //跑起來
-        tds.crawl(stockId,LocalDate.now(), months);
+        tds.crawl(stockId, LocalDate.now(), months);
         //驗證
+        Mockito.verify(saveDao, Mockito.times(1)).createTable(Mockito.any());
         Mockito.verify(jrs, Mockito.times(2)).getData(Mockito.any(), Mockito.any());
     }
 
@@ -47,24 +54,51 @@ public class TwseDbServiceTest {
      * 測試上網查詢到資料後會存入資料庫
      */
     @Test
-    public void testCrawl_saveDao_active() throws Exception{
+    public void testCrawl_hasData() throws Exception {
         System.out.println("testCrawl_saveDao_active");
         //準備假物件
         JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
         SaveDao saveDao = Mockito.mock(SaveDaoImpl.class);
         OneMonthPrice omp = new OneMonthPrice();
+        omp.setStat("ok");
         omp.setData(List.of());
-        Optional<OneMonthPrice> opt = Optional.of(omp);
-        Mockito.when(jrs.getData(Mockito.any(),Mockito.eq(OneMonthPrice.class))).thenReturn(opt);
+        Mockito.when(jrs.getData(Mockito.any(), Mockito.eq(OneMonthPrice.class))).thenReturn(omp);
         //準備物件
         String stockId = "2323";
         int months = 2;
         TwseDbService tds = new TwseDbService(jrs, saveDao);
         //跑起來
-        tds.crawl(stockId,LocalDate.now(), months);
+        tds.crawl(stockId, LocalDate.now(), months);
         //驗證
         Mockito.verify(saveDao, Mockito.times(1)).createTable(Mockito.any());
-        Mockito.verify(saveDao, Mockito.times(1)).save(Mockito.any(), Mockito.any());
+        Mockito.verify(saveDao, Mockito.times(2)).save(Mockito.any(), Mockito.any());
+
+    }
+
+    /**
+     * 測試上網查詢到資料後會存入資料庫
+     */
+    @Test
+    public void testCrawl_noData() throws Exception {
+        System.out.println("testCrawl_saveDao_no_active");
+        //準備假物件
+        JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
+        SaveDao saveDao = Mockito.mock(SaveDaoImpl.class);
+        OneMonthPrice omp = new OneMonthPrice();
+        omp.setStat("沒有符合的資料");
+        Mockito.when(jrs.getData(Mockito.any(), Mockito.eq(OneMonthPrice.class))).thenReturn(omp);
+        //準備物件
+        String stockId = "2323";
+        int months = 2;
+        TwseDbService tds = new TwseDbService(jrs, saveDao);
+        try {
+            //跑起來
+            tds.crawl(stockId, LocalDate.now(), months);
+        } catch (NotMatchDataException ex) {
+        }
+        //驗證
+        Mockito.verify(saveDao, Mockito.times(1)).createTable(Mockito.any());
+        Mockito.verify(saveDao, Mockito.times(0)).save(Mockito.any(), Mockito.any());
 
     }
 
