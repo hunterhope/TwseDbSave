@@ -4,14 +4,17 @@
  */
 package com.hunterhope.twsedbsave.service.test;
 
-import com.hunterhope.jsonrequest.JsonRequestService;
+import com.hunterhope.jsonrequest.service.JsonRequestService;
+import com.hunterhope.jsonrequest.service.UrlAndQueryString;
 import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.dao.impl.SaveDaoImpl;
-import com.hunterhope.twsedbsave.service.TwseDbService;
+import com.hunterhope.twsedbsave.service.TwseDbSaveService;
 import com.hunterhope.twsedbsave.other.WaitClock;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
 import java.time.LocalDate;
+import java.time.chrono.MinguoDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -44,7 +47,7 @@ public class TwseDbServiceTest {
         //準備物件
         String stockId = "2323";
         int months = 2;
-        TwseDbService tds = new TwseDbService(jrs, saveDao,waitClock);
+        TwseDbSaveService tds = new TwseDbSaveService(jrs, saveDao,waitClock);
         //跑起來
         tds.crawl(stockId, LocalDate.now(), months);
         //驗證
@@ -69,7 +72,7 @@ public class TwseDbServiceTest {
         //準備物件
         String stockId = "2323";
         int months = 2;
-        TwseDbService tds = new TwseDbService(jrs, saveDao,waitClock);
+        TwseDbSaveService tds = new TwseDbSaveService(jrs, saveDao,waitClock);
         //跑起來
         tds.crawl(stockId, LocalDate.now(), months);
         //驗證
@@ -94,7 +97,7 @@ public class TwseDbServiceTest {
         //準備物件
         String stockId = "2323";
         int months = 2;
-        TwseDbService tds = new TwseDbService(jrs, saveDao,waitClock);
+        TwseDbSaveService tds = new TwseDbSaveService(jrs, saveDao,waitClock);
         try {
             //跑起來
             tds.crawl(stockId, LocalDate.now(), months);
@@ -109,13 +112,43 @@ public class TwseDbServiceTest {
      * Test of updateHistory method, of class TwseDbService.
      */
     @Test
-    public void testUpdateHistory() {
+    public void testUpdateHistoryForOneYear() throws Exception{
         System.out.println("updateHistory");
-        String stockId = "";
-        TwseDbService instance = new TwseDbService();
+        String stockId = "2323";
+        //準備假物件
+        JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
+        SaveDao saveDao = Mockito.mock(SaveDaoImpl.class);
+        WaitClock waitClock = Mockito.mock(WaitClock.class);
+        Mockito.when(saveDao.queryLastDate(Mockito.any())).thenReturn("113/12/23");
+        
+        UrlAndQueryString qsOK = new UrlAndQueryString("https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY");
+        qsOK.addParam("stockNo", stockId);
+        qsOK.addParam("response", "json");
+        qsOK.addParam("date", "20241223");
+        
+        UrlAndQueryString qsFail = new UrlAndQueryString("https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY");
+        qsFail.addParam("stockNo", stockId);
+        qsFail.addParam("response", "json");
+        qsFail.addParam("date", "20231223");
+        
+        OneMonthPrice ompOK = new OneMonthPrice();
+        ompOK.setStat("ok");
+        ompOK.setData(List.of());
+        
+        OneMonthPrice ompError = new OneMonthPrice();
+        ompError.setStat("無資料");
+        ompError.setData(List.of());
+        
+        Mockito.when(jrs.getData(qsOK, OneMonthPrice.class)).thenReturn(ompOK);
+        Mockito.when(jrs.getData(Mockito.any(), Mockito.eq(OneMonthPrice.class))).thenReturn(ompOK);
+        Mockito.when(jrs.getData(qsFail, OneMonthPrice.class)).thenReturn(ompError);
+        //準備物件
+        TwseDbSaveService instance = new TwseDbSaveService(jrs,saveDao,waitClock);
+        //跑起來
         instance.updateHistory(stockId);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        //驗證
+        Mockito.verify(saveDao, Mockito.times(12)).save(Mockito.any(), Mockito.any());
+        
     }
-
+   
 }

@@ -28,4 +28,9 @@ public interface SaveDao {
      * @param tableName 資料表名稱
      */
     void createTable(String tableName);
+    
+    /**
+     * 取得資料庫內最後一筆交易紀錄日期
+     */
+    String queryLastDate(String tableName);
 }

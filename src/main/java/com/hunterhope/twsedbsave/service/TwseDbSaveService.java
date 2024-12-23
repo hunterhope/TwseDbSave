@@ -5,8 +5,8 @@
 package com.hunterhope.twsedbsave.service;
 
 import com.hunterhope.twsedbsave.other.WaitClock;
-import com.hunterhope.jsonrequest.JsonRequestService;
-import com.hunterhope.jsonrequest.UrlAndQueryString;
+import com.hunterhope.jsonrequest.service.JsonRequestService;
+import com.hunterhope.jsonrequest.service.UrlAndQueryString;
 import com.hunterhope.jsonrequest.exception.DataClassFieldNameErrorException;
 import com.hunterhope.jsonrequest.exception.NoInternetException;
 import com.hunterhope.jsonrequest.exception.ResponseEmptyException;
@@ -17,29 +17,28 @@ import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
 import com.hunterhope.twsedbsave.service.exception.TwseDbSaveException;
 import java.time.LocalDate;
+import java.time.chrono.MinguoDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
  *
  * @author user
  */
-public class TwseDbService {
+public class TwseDbSaveService {
 
     private final JsonRequestService jrs;
     private final SaveDao saveDao;
     private final String TWSE_STOCK_PRICE_BASE_URL = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY";//?date=20240331&stockNo=2323&response=json
     private final WaitClock waitClock;
-    public TwseDbService() {
+    public TwseDbSaveService() {
         this.jrs = new JsonRequestService();
         this.saveDao = null;
         this.waitClock=new WaitClock();
     }
 
-    public TwseDbService(JsonRequestService jrs, SaveDao saveDao,WaitClock waitClock1) {
+    public TwseDbSaveService(JsonRequestService jrs, SaveDao saveDao,WaitClock waitClock1) {
         this.jrs = jrs;
         this.saveDao = saveDao;
         this.waitClock=waitClock1;
@@ -55,7 +54,7 @@ public class TwseDbService {
      * @throws NotMatchDataException 查詢回來如果沒有符合的資料，有可能是此股票代號錯誤，或沒有該股票的交易紀錄了
      */
     public void crawl(String stockId, LocalDate stateDate, int months) throws TwseDbSaveException, NotMatchDataException {
-        String tableName = StockEveryDayInfo.TABLE_NAME_PREFIX + stockId;
+        String tableName = combinTableName(stockId);
         //建立表格
         saveDao.createTable(tableName);
         //建立UrlAndQueryString
@@ -85,14 +84,6 @@ public class TwseDbService {
         }
     }
 
-    private void waitForSecurity() {
-        Random r = new Random();
-        try {
-            Thread.sleep(r.nextLong(5, 11) * 1000);
-        } catch (InterruptedException ex) {
-        }
-    }
-
     private List<StockEveryDayInfo> convert(OneMonthPrice omp) {
         return omp.getData().stream()
                 .map(items -> {
@@ -109,7 +100,34 @@ public class TwseDbService {
                 .collect(Collectors.toList());
 
     }
+    
+    private String combinTableName(String stockId){
+        return StockEveryDayInfo.TABLE_NAME_PREFIX + stockId;
+    }
 
-    public void updateHistory(String stockId) {
+    /**
+     * 自動更新歷史資料，到抓不到資料
+     */
+    public void updateHistory(String stockId) throws TwseDbSaveException {
+        try {
+            //查詢出最後一筆資料日期(原則上每次抓取資料都是一個月一個月的)
+            LocalDate lastDate=queryLastDate(stockId);
+            //無限迴圈上網抓取資料，直到沒有資料
+            do{                
+               crawl(stockId, lastDate, 1);
+               lastDate = lastDate.minusMonths(1);
+            }while(true);
+        } catch (NotMatchDataException ex) {
+            //更新結束
+        }
+    }
+    
+    private LocalDate queryLastDate(String stockId){
+        String lastDateStr = saveDao.queryLastDate(combinTableName(stockId));
+        String[] ymd = lastDateStr.split("/");
+        return LocalDate.from(MinguoDate.of(
+                Integer.parseInt(ymd[0]),
+                Integer.parseInt(ymd[1]),
+                Integer.parseInt(ymd[2])));
     }
 }
