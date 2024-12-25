@@ -130,4 +130,10 @@ public class TwseDbSaveService {
                 Integer.parseInt(ymd[1]),
                 Integer.parseInt(ymd[2])));
     }
+    /**
+     * 自動更新到最新資料
+     */
+    public void updateToLatest(String stockId) throws TwseDbSaveException {
+        
+    }
 }

@@ -33,4 +33,9 @@ public interface SaveDao {
      * 取得資料庫內最後一筆交易紀錄日期
      */
     String queryLastDate(String tableName);
+    
+    /**
+     * 取得資料庫內最新一筆交易紀錄日期
+     */
+    String queryLatestDate(String tableName);
 }

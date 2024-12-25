@@ -12,13 +12,11 @@ import com.hunterhope.twsedbsave.service.TwseDbSaveService;
 import com.hunterhope.twsedbsave.other.WaitClock;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
+import com.hunterhope.twsedbsave.service.exception.TwseDbSaveException;
 import java.time.LocalDate;
-import java.time.chrono.MinguoDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 import org.mockito.Mockito;
 
 /**
@@ -113,7 +111,7 @@ public class TwseDbServiceTest {
      */
     @Test
     public void testUpdateHistoryForOneYear() throws Exception{
-        System.out.println("updateHistory");
+        System.out.println("testUpdateHistoryForOneYear");
         String stockId = "2323";
         //準備假物件
         JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
@@ -148,6 +146,26 @@ public class TwseDbServiceTest {
         instance.updateHistory(stockId);
         //驗證
         Mockito.verify(saveDao, Mockito.times(12)).save(Mockito.any(), Mockito.any());
+        
+    }
+    
+    @Test
+    public void testUpdateToLatest() throws TwseDbSaveException{
+        System.out.println("testUpdateToLatest");
+        
+        //準備假物件
+        JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
+        SaveDao saveDao = Mockito.mock(SaveDaoImpl.class);
+        WaitClock waitClock = Mockito.mock(WaitClock.class);
+        Mockito.when(saveDao.queryLatestDate(Mockito.any())).thenReturn("113/11/23");
+        
+        //準備物件
+        String stockId = "2323";
+        TwseDbSaveService instance = new TwseDbSaveService(jrs,saveDao,waitClock);
+        //跑起來
+        instance.updateToLatest(stockId);
+        //驗證
+        Assertions.fail();
         
     }
    
