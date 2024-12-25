@@ -4,6 +4,10 @@
  */
 package com.hunterhope.twsedbsave.service.test;
 
+import com.hunterhope.jsonrequest.exception.DataClassFieldNameErrorException;
+import com.hunterhope.jsonrequest.exception.NoInternetException;
+import com.hunterhope.jsonrequest.exception.ResponseEmptyException;
+import com.hunterhope.jsonrequest.exception.ServerMaintainException;
 import com.hunterhope.jsonrequest.service.JsonRequestService;
 import com.hunterhope.jsonrequest.service.UrlAndQueryString;
 import com.hunterhope.twsedbsave.dao.SaveDao;
@@ -150,22 +154,45 @@ public class TwseDbServiceTest {
     }
     
     @Test
-    public void testUpdateToLatest() throws TwseDbSaveException{
-        System.out.println("testUpdateToLatest");
-        
+    public void testUpdateToLatest_1_month() throws Exception{
+        System.out.println("testUpdateToLatest_1_month");
         //準備假物件
         JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
         SaveDao saveDao = Mockito.mock(SaveDaoImpl.class);
         WaitClock waitClock = Mockito.mock(WaitClock.class);
-        Mockito.when(saveDao.queryLatestDate(Mockito.any())).thenReturn("113/11/23");
-        
+        Mockito.when(saveDao.queryLatestDate(Mockito.any())).thenReturn("112/12/23");
+        OneMonthPrice omp = new OneMonthPrice();
+        omp.setStat("ok");
+        omp.setData(List.of());
+        Mockito.when(jrs.getData(Mockito.any(), Mockito.eq(OneMonthPrice.class))).thenReturn(omp);
         //準備物件
         String stockId = "2323";
         TwseDbSaveService instance = new TwseDbSaveService(jrs,saveDao,waitClock);
         //跑起來
-        instance.updateToLatest(stockId);
+        instance.updateToLatest(stockId,LocalDate.of(2023, 12, 30));
         //驗證
-        Assertions.fail();
+        Mockito.verify(saveDao, Mockito.times(1)).save(Mockito.any(), Mockito.any());
+    }
+    
+    @Test
+    public void testUpdateToLatest_13_month() throws Exception{
+        System.out.println("testUpdateToLatest_12_month");
+        //準備假物件
+        JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
+        SaveDao saveDao = Mockito.mock(SaveDaoImpl.class);
+        WaitClock waitClock = Mockito.mock(WaitClock.class);
+        Mockito.when(saveDao.queryLatestDate(Mockito.any())).thenReturn("112/12/23");
+        OneMonthPrice omp = new OneMonthPrice();
+        omp.setStat("ok");
+        omp.setData(List.of());
+        Mockito.when(jrs.getData(Mockito.any(), Mockito.eq(OneMonthPrice.class))).thenReturn(omp);
+        //準備物件
+        String stockId = "2323";
+        TwseDbSaveService instance = new TwseDbSaveService(jrs,saveDao,waitClock);
+        //跑起來
+        instance.updateToLatest(stockId,LocalDate.of(2024, 12, 30));
+        //驗證
+        Mockito.verify(saveDao, Mockito.times(13)).save(Mockito.any(), Mockito.any());
         
     }
    
