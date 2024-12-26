@@ -6,6 +6,7 @@
 module TwseDbSave {
     requires JsonRequest;
     requires com.google.gson;
+    requires java.sql;
     requires com.google.errorprone.annotations;
     exports com.hunterhope.twsedbsave.service;
     exports com.hunterhope.twsedbsave.service.exception;

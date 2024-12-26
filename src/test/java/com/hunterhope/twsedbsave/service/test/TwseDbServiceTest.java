@@ -24,11 +24,11 @@ import org.mockito.Mockito;
 public class TwseDbServiceTest {
 
     //準備假物件
-    private JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
-    private SaveDao saveDao = Mockito.mock(SaveDaoImpl.class);
-    private WaitClock waitClock = Mockito.mock(WaitClock.class);
-    private OneMonthPrice hasData;
-    private OneMonthPrice noData;
+    private final JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
+    private final SaveDao saveDao = Mockito.mock(SaveDaoImpl.class);
+    private final WaitClock waitClock = Mockito.mock(WaitClock.class);
+    private final OneMonthPrice hasData;
+    private final OneMonthPrice noData;
 
     public TwseDbServiceTest() {
         hasData = new OneMonthPrice();
@@ -50,19 +50,19 @@ public class TwseDbServiceTest {
         }
     }
 
-    private void mock_db_latestDate(String latestData) {
+    private void mock_db_latestDate(String latestData) throws Exception{
         Mockito.when(saveDao.queryLatestDate(Mockito.any())).thenReturn(latestData);
     }
 
-    private void verifyDaoCreateTable(int times) {
-        Mockito.verify(saveDao, Mockito.times(times)).createTable(Mockito.any());
-    }
+//    private void verifyDaoCreateTable(int times) {
+//        Mockito.verify(saveDao, Mockito.times(times)).createTable(Mockito.any());
+//    }
 
     private void verifyHttpRequest(int times) throws Exception {
         Mockito.verify(jrs, Mockito.times(times)).getData(Mockito.any(), Mockito.any());
     }
 
-    private void verifyDaoSave(int times) {
+    private void verifyDaoSave(int times) throws Exception{
         Mockito.verify(saveDao, Mockito.times(times)).save(Mockito.any(), Mockito.any());
     }
 
@@ -71,7 +71,7 @@ public class TwseDbServiceTest {
      */
     @Test
     public void testCrawl_two_month_data_real_send_request_2times() throws Exception {
-        System.out.println("testCrawl_two_month_data_real_send_request_2times");
+        System.out.print("測試上網爬2個月資料，確實發出2次請求:");
         //準備物件
         String stockId = "2323";
         int months = 2;
@@ -81,9 +81,9 @@ public class TwseDbServiceTest {
         //跑起來
         tds.crawl(stockId, LocalDate.now(), months);
         //驗證
-        verifyDaoCreateTable(1);
+//        verifyDaoCreateTable(1);
         verifyHttpRequest(2);
-
+        System.out.println("成功");
     }
 
     /**
@@ -91,7 +91,7 @@ public class TwseDbServiceTest {
      */
     @Test
     public void testCrawl_hasData() throws Exception {
-        System.out.println("testCrawl_saveDao_active");
+        System.out.print("測試上網爬取2個月有資料，資料庫確實存取2次:");
         //準備物件
         String stockId = "2323";
         int months = 2;
@@ -102,7 +102,7 @@ public class TwseDbServiceTest {
         tds.crawl(stockId, LocalDate.now(), months);
         //驗證
         verifyDaoSave(2);
-
+        System.out.println("成功");
     }
 
     /**
@@ -110,7 +110,7 @@ public class TwseDbServiceTest {
      */
     @Test
     public void testCrawl_noData() throws Exception {
-        System.out.println("testCrawl_saveDao_no_active");
+        System.out.print("測試上網爬取資料，回應無資料:");
         //準備物件
         String stockId = "2323";
         int months = 2;
@@ -121,10 +121,12 @@ public class TwseDbServiceTest {
             //跑起來
             tds.crawl(stockId, LocalDate.now(), months);
             verifyDaoSave(2);
+            System.out.println("失敗");
         } catch (NotMatchDataException ex) {
             //驗證
-            verifyDaoCreateTable(1);
+//            verifyDaoCreateTable(1);
             verifyDaoSave(0);
+            System.out.println("成功");
         }
     }
 
@@ -133,7 +135,7 @@ public class TwseDbServiceTest {
      */
     @Test
     public void testUpdateHistoryForOneYear() throws Exception {
-        System.out.println("testUpdateHistoryForOneYear");
+        System.out.print("測試更新歷史資料，更新直到網路沒資料:");
         //準備物件
         String stockId = "2323";
         UrlAndQueryString noDataQueryString = new UrlAndQueryString("https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY");
@@ -149,11 +151,12 @@ public class TwseDbServiceTest {
         instance.updateHistory(stockId);
         //驗證
         verifyDaoSave(12);
+        System.out.println("成功");
     }
 
     @Test
     public void testUpdateToLatest_1_month() throws Exception {
-        System.out.println("testUpdateToLatest_1_month");
+        System.out.print("測試上網更新最新資料1個月(或是說當月份)");
         //準備物件
         String stockId = "2323";
         TwseDbSaveService instance = new TwseDbSaveService(jrs, saveDao, waitClock);
@@ -164,11 +167,12 @@ public class TwseDbServiceTest {
         instance.updateToLatest(stockId, LocalDate.of(2023, 12, 30));
         //驗證
         verifyDaoSave(1);
+        System.out.println("成功");
     }
 
     @Test
     public void testUpdateToLatest_13_month() throws Exception {
-        System.out.println("testUpdateToLatest_12_month");
+        System.out.print("測試上網更新最新資料13個月:");
         //準備物件
         String stockId = "2323";
         TwseDbSaveService instance = new TwseDbSaveService(jrs, saveDao, waitClock);
@@ -179,6 +183,7 @@ public class TwseDbServiceTest {
         instance.updateToLatest(stockId, LocalDate.of(2024, 12, 30));
         //驗證
         verifyDaoSave(13);
+        System.out.println("成功");
     }
 
 }

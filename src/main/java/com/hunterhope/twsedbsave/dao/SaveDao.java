@@ -5,6 +5,7 @@
 package com.hunterhope.twsedbsave.dao;
 
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -20,22 +21,22 @@ public interface SaveDao {
      * @param data 每一列的資料
      * @return 是否成功異動
      */
-    int[] save(String tableName,List<StockEveryDayInfo> data);
+    int[] save(String tableName,List<StockEveryDayInfo> data) throws SQLException;
   
     /**
      * 資料庫一開始沒有任何資料表，要等到使用者查詢才會建立<br>
      * 建立資料表
      * @param tableName 資料表名稱
      */
-    void createTable(String tableName);
+    void createTable(String tableName)throws SQLException;
     
     /**
      * 取得資料庫內最後一筆交易紀錄日期
      */
-    String queryLastDate(String tableName);
+    String queryLastDate(String tableName)throws SQLException;
     
     /**
      * 取得資料庫內最新一筆交易紀錄日期
      */
-    String queryLatestDate(String tableName);
+    String queryLatestDate(String tableName)throws SQLException;
 }

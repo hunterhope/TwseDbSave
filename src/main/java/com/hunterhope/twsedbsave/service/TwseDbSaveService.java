@@ -16,6 +16,8 @@ import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
 import com.hunterhope.twsedbsave.service.exception.TwseDbSaveException;
+import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.chrono.MinguoDate;
@@ -59,7 +61,7 @@ public class TwseDbSaveService {
     public void crawl(String stockId, LocalDate stateDate, int months) throws TwseDbSaveException, NotMatchDataException {
         String tableName = combinTableName(stockId);
         //建立表格
-        saveDao.createTable(tableName);
+//        saveDao.createTable(tableName);
         //建立UrlAndQueryString
         UrlAndQueryString qs = new UrlAndQueryString(TWSE_STOCK_PRICE_BASE_URL);
         qs.addParam("stockNo", stockId);
@@ -83,6 +85,9 @@ public class TwseDbSaveService {
                 }
             } catch (NoInternetException | ServerMaintainException | DataClassFieldNameErrorException | ResponseEmptyException ex) {
                 throw new TwseDbSaveException(ex);
+            } catch (SQLSyntaxErrorException ex) {
+
+            } catch (SQLException ex) {
             }
             //每次上網爬資料間隔5~10秒
             if (months > 1) {//只抓取1個月則不用等
@@ -126,10 +131,12 @@ public class TwseDbSaveService {
             } while (true);
         } catch (NotMatchDataException ex) {
             //更新結束
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
-    private LocalDate queryLastDate(String stockId) {
+    private LocalDate queryLastDate(String stockId) throws SQLException {
         return stringDateToLocalDate(saveDao.queryLastDate(combinTableName(stockId)));
     }
 
@@ -141,26 +148,31 @@ public class TwseDbSaveService {
                 Integer.parseInt(ymd[2])));
     }
 
-    private LocalDate queryLatestDate(String stockId){
+    private LocalDate queryLatestDate(String stockId) throws SQLException {
         return stringDateToLocalDate(saveDao.queryLatestDate(combinTableName(stockId)));
     }
+
     /**
      * 方便測試用,建議使用updateToLatest(String stockId)
      */
-    public void updateToLatest(String stockId,LocalDate nowDate) throws TwseDbSaveException {
-        //取得資料庫內最新紀錄日期
-        LocalDate dbLatestDate = queryLatestDate(stockId);
-        //比對日期差異計算出要更新月份數
-        long difMonths = ChronoUnit.MONTHS.between(YearMonth.from(dbLatestDate),YearMonth.from(nowDate))+1;//+1是因為dbLatestDate的月份也要抓取用來確保資料完整
+    public void updateToLatest(String stockId, LocalDate nowDate) throws TwseDbSaveException {
+
         try {
+            //取得資料庫內最新紀錄日期
+            LocalDate dbLatestDate = queryLatestDate(stockId);
+            //比對日期差異計算出要更新月份數
+            long difMonths = ChronoUnit.MONTHS.between(YearMonth.from(dbLatestDate), YearMonth.from(nowDate)) + 1;//+1是因為dbLatestDate的月份也要抓取用來確保資料完整
             crawl(stockId, nowDate, (int) difMonths);
         } catch (NotMatchDataException ex) {
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
         }
     }
+
     /**
      * 自動更新到最新資料
      */
-    public void updateToLatest(String stockId) throws TwseDbSaveException{
+    public void updateToLatest(String stockId) throws TwseDbSaveException {
         updateToLatest(stockId, LocalDate.now());
     }
 }
