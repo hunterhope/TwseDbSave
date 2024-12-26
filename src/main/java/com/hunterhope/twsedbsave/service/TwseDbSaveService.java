@@ -17,6 +17,7 @@ import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
 import com.hunterhope.twsedbsave.service.exception.TwseDbSaveException;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.SQLSyntaxErrorException;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -76,7 +77,7 @@ public class TwseDbSaveService {
                     //轉換成資料庫表格形式
                     data = convert(omp);
                     //存入資料庫
-                    saveDataToDb(tableName,data);
+                    saveDataToDb(tableName, data);
                 } else {
                     throw new NotMatchDataException(omp.getStat());
                 }
@@ -87,12 +88,12 @@ public class TwseDbSaveService {
                     //建立表格
                     saveDao.createTable(tableName);
                     //在存入資料庫一次
-                    saveDataToDb(tableName,data);//基本上來到這邊data不應該是null
+                    saveDataToDb(tableName, data);//基本上來到這邊data不應該是null,所以不檢查
                 } catch (SQLException ex1) {
                     throw new RuntimeException(ex1);
                 }
-
             } catch (SQLException ex) {
+                throw new RuntimeException(ex);
             }
             //每次上網爬資料間隔5~10秒
             if (months > 1) {//只抓取1個月則不用等
@@ -102,11 +103,15 @@ public class TwseDbSaveService {
     }
 
     private void saveDataToDb(String tableName, List<StockEveryDayInfo> data) throws SQLException {
-        saveDao.save(tableName, data);
-        //捕捉重複資料產生的例外
-        //查詢資料庫此月份資料出來
-        //排除重複資料
-        //在存入資料庫一次
+        try {
+            saveDao.save(tableName, data);
+        } catch (SQLIntegrityConstraintViolationException ex) {//捕捉重複資料產生的例外
+            //查詢資料庫此月份資料出來
+            
+            //排除重複資料
+            
+            //在存入資料庫一次
+        }
     }
 
     private List<StockEveryDayInfo> convert(OneMonthPrice omp) {

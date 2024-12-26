@@ -12,6 +12,7 @@ import com.hunterhope.twsedbsave.service.TwseDbSaveService;
 import com.hunterhope.twsedbsave.other.WaitClock;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.SQLSyntaxErrorException;
 import java.time.LocalDate;
 import java.util.List;
@@ -68,6 +69,25 @@ public class TwseDbServiceTest {
     }
 
     /**
+     * 測試當資料庫存入相同資料產生主鍵重複的情況,會執行排除重複資料動作在存入資料庫
+     */
+    @Test
+    public void testCrawl_has_duplicate_data()throws Exception{
+        System.out.print("測試資料庫發生資料重複例外,有執行排除後再存入動作:");
+        //準備物件
+        String stockId = "2323";
+        int months = 1;
+        TwseDbSaveService tds = new TwseDbSaveService(jrs, saveDao, waitClock);
+        //模擬依賴行為
+        mock_request_hasData();
+        Mockito.when(saveDao.save(Mockito.any(), Mockito.any())).thenThrow(SQLIntegrityConstraintViolationException.class).thenReturn(new int[]{});
+        //跑起來
+        tds.crawl(stockId, LocalDate.now(), months);
+        //驗證
+        verifyDaoSave(2);
+        System.out.println("成功");
+    }
+    /**
      * 測試第一次抓取到網路資料,要存入資料庫卻沒有表格的狀態
      */
     @Test
@@ -84,6 +104,7 @@ public class TwseDbServiceTest {
         tds.crawl(stockId, LocalDate.now(), months);
         //驗證
         verifyDaoCreateTable(1);
+        verifyDaoSave(3);//因為是抓取2個月資料,所以會發生3次存取
         System.out.println("成功");
     }
     /**
