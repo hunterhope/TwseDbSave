@@ -24,6 +24,8 @@ import java.time.chrono.MinguoDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -60,8 +62,7 @@ public class TwseDbSaveService {
      */
     public void crawl(String stockId, LocalDate stateDate, int months) throws TwseDbSaveException, NotMatchDataException {
         String tableName = combinTableName(stockId);
-        //建立表格
-//        saveDao.createTable(tableName);
+        List<StockEveryDayInfo> data = null;
         //建立UrlAndQueryString
         UrlAndQueryString qs = new UrlAndQueryString(TWSE_STOCK_PRICE_BASE_URL);
         qs.addParam("stockNo", stockId);
@@ -73,19 +74,23 @@ public class TwseDbSaveService {
                 OneMonthPrice omp = jrs.getData(qs, OneMonthPrice.class);
                 if (omp.hasData()) {
                     //轉換成資料庫表格形式
-                    List<StockEveryDayInfo> data = convert(omp);
+                    data = convert(omp);
                     //存入資料庫
-                    saveDao.save(tableName, data);
-                    //捕捉重複資料產生的例外
-                    //查詢資料庫此月份資料出來
-                    //排除重複資料
-                    //在存入資料庫一次
+                    saveDataToDb(tableName,data);
                 } else {
                     throw new NotMatchDataException(omp.getStat());
                 }
             } catch (NoInternetException | ServerMaintainException | DataClassFieldNameErrorException | ResponseEmptyException ex) {
                 throw new TwseDbSaveException(ex);
             } catch (SQLSyntaxErrorException ex) {
+                try {
+                    //建立表格
+                    saveDao.createTable(tableName);
+                    //在存入資料庫一次
+                    saveDataToDb(tableName,data);//基本上來到這邊data不應該是null
+                } catch (SQLException ex1) {
+                    throw new RuntimeException(ex1);
+                }
 
             } catch (SQLException ex) {
             }
@@ -94,6 +99,14 @@ public class TwseDbSaveService {
                 waitClock.waitForSecurity(5, 11);
             }
         }
+    }
+
+    private void saveDataToDb(String tableName, List<StockEveryDayInfo> data) throws SQLException {
+        saveDao.save(tableName, data);
+        //捕捉重複資料產生的例外
+        //查詢資料庫此月份資料出來
+        //排除重複資料
+        //在存入資料庫一次
     }
 
     private List<StockEveryDayInfo> convert(OneMonthPrice omp) {

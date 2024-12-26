@@ -12,6 +12,7 @@ import com.hunterhope.twsedbsave.service.TwseDbSaveService;
 import com.hunterhope.twsedbsave.other.WaitClock;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
+import java.sql.SQLSyntaxErrorException;
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -54,9 +55,9 @@ public class TwseDbServiceTest {
         Mockito.when(saveDao.queryLatestDate(Mockito.any())).thenReturn(latestData);
     }
 
-//    private void verifyDaoCreateTable(int times) {
-//        Mockito.verify(saveDao, Mockito.times(times)).createTable(Mockito.any());
-//    }
+    private void verifyDaoCreateTable(int times) throws Exception{
+        Mockito.verify(saveDao, Mockito.times(times)).createTable(Mockito.any());
+    }
 
     private void verifyHttpRequest(int times) throws Exception {
         Mockito.verify(jrs, Mockito.times(times)).getData(Mockito.any(), Mockito.any());
@@ -66,6 +67,25 @@ public class TwseDbServiceTest {
         Mockito.verify(saveDao, Mockito.times(times)).save(Mockito.any(), Mockito.any());
     }
 
+    /**
+     * 測試第一次抓取到網路資料,要存入資料庫卻沒有表格的狀態
+     */
+    @Test
+    public void testCrawl_not_exist_table()throws Exception{
+        System.out.print("測試第一次抓取到網路資料,要存入資料庫卻沒有表格的狀態:");
+        //準備物件
+        String stockId = "2323";
+        int months = 2;
+        TwseDbSaveService tds = new TwseDbSaveService(jrs, saveDao, waitClock);
+        //模擬依賴行為
+        mock_request_hasData();
+        Mockito.when(saveDao.save(Mockito.any(), Mockito.any())).thenThrow(SQLSyntaxErrorException.class).thenReturn(new int[]{});
+        //跑起來
+        tds.crawl(stockId, LocalDate.now(), months);
+        //驗證
+        verifyDaoCreateTable(1);
+        System.out.println("成功");
+    }
     /**
      * 測試上網爬資料2個月
      */
@@ -81,7 +101,6 @@ public class TwseDbServiceTest {
         //跑起來
         tds.crawl(stockId, LocalDate.now(), months);
         //驗證
-//        verifyDaoCreateTable(1);
         verifyHttpRequest(2);
         System.out.println("成功");
     }
@@ -124,7 +143,6 @@ public class TwseDbServiceTest {
             System.out.println("失敗");
         } catch (NotMatchDataException ex) {
             //驗證
-//            verifyDaoCreateTable(1);
             verifyDaoSave(0);
             System.out.println("成功");
         }
