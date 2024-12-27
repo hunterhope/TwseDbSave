@@ -39,4 +39,11 @@ public interface SaveDao {
      * 取得資料庫內最新一筆交易紀錄日期
      */
     String queryLatestDate(String tableName)throws SQLException;
+    
+    /**
+     * 取得某一月份的全部資料日期
+     * @param yymmdd 某年某月某日。請根據您存入的資料格式帶入。並且是1號，ex:113/12/01
+     */
+    List<String> queryDates(String tableName,String yymmdd)throws SQLException;
+            
 }

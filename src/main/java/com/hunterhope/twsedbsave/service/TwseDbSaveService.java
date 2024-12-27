@@ -13,6 +13,8 @@ import com.hunterhope.jsonrequest.exception.ResponseEmptyException;
 import com.hunterhope.jsonrequest.exception.ServerMaintainException;
 import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
+import com.hunterhope.twsedbsave.other.RemoveDuplicateDataUS;
+import com.hunterhope.twsedbsave.other.StringDateToLocalDateUS;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
 import com.hunterhope.twsedbsave.service.exception.TwseDbSaveException;
@@ -39,17 +41,20 @@ public class TwseDbSaveService {
     private final SaveDao saveDao;
     private final String TWSE_STOCK_PRICE_BASE_URL = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY";//?date=20240331&stockNo=2323&response=json
     private final WaitClock waitClock;
+    private final StringDateToLocalDateUS sdToLdUS;
 
     public TwseDbSaveService() {
         this.jrs = new JsonRequestService();
         this.saveDao = null;
         this.waitClock = new WaitClock();
+        this.sdToLdUS=new StringDateToLocalDateUS();
     }
 
     public TwseDbSaveService(JsonRequestService jrs, SaveDao saveDao, WaitClock waitClock1) {
         this.jrs = jrs;
         this.saveDao = saveDao;
         this.waitClock = waitClock1;
+        this.sdToLdUS=new StringDateToLocalDateUS();
     }
 
     /**
@@ -105,12 +110,10 @@ public class TwseDbSaveService {
     private void saveDataToDb(String tableName, List<StockEveryDayInfo> data) throws SQLException {
         try {
             saveDao.save(tableName, data);
-        } catch (SQLIntegrityConstraintViolationException ex) {//捕捉重複資料產生的例外
-            //查詢資料庫此月份資料出來
-            
-            //排除重複資料
-            
+        } catch (SQLIntegrityConstraintViolationException ex) { //捕捉重複資料產生的例外
+            new RemoveDuplicateDataUS().action(tableName, saveDao, data);
             //在存入資料庫一次
+            saveDao.save(tableName, data);
         }
     }
 
@@ -155,19 +158,11 @@ public class TwseDbSaveService {
     }
 
     private LocalDate queryLastDate(String stockId) throws SQLException {
-        return stringDateToLocalDate(saveDao.queryLastDate(combinTableName(stockId)));
-    }
-
-    private LocalDate stringDateToLocalDate(String sDate) {
-        String[] ymd = sDate.split("/");
-        return LocalDate.from(MinguoDate.of(
-                Integer.parseInt(ymd[0]),
-                Integer.parseInt(ymd[1]),
-                Integer.parseInt(ymd[2])));
+        return sdToLdUS.change(saveDao.queryLastDate(combinTableName(stockId)));
     }
 
     private LocalDate queryLatestDate(String stockId) throws SQLException {
-        return stringDateToLocalDate(saveDao.queryLatestDate(combinTableName(stockId)));
+        return sdToLdUS.change(saveDao.queryLatestDate(combinTableName(stockId)));
     }
 
     /**

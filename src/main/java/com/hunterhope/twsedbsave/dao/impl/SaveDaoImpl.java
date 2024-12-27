@@ -6,6 +6,7 @@ package com.hunterhope.twsedbsave.dao.impl;
 
 import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -31,6 +32,11 @@ public class SaveDaoImpl implements SaveDao{
 
     @Override
     public String queryLatestDate(String tableName) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public List<String> queryDates(String tableName, String yymmdd) throws SQLException {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
     
