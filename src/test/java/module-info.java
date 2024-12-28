@@ -7,8 +7,10 @@ module TwseDbSaveTest {
     requires TwseDbSave;
     requires JsonRequest;
     requires java.sql;
+    requires spring.jdbc;
     requires org.junit.jupiter.api;
     requires org.mockito;
     opens com.hunterhope.twsedbsave.service.test;
     opens com.hunterhope.twsedbsave.other.test;
+    opens com.hunterhope.twsedbsave.dao.impl.test;
 }

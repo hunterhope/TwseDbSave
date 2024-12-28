@@ -8,6 +8,7 @@ module TwseDbSave {
     requires com.google.gson;
     requires java.sql;
     requires com.google.errorprone.annotations;
+    requires spring.jdbc;
     exports com.hunterhope.twsedbsave.service;
     exports com.hunterhope.twsedbsave.service.exception;
     exports com.hunterhope.twsedbsave.service.data to TwseDbSaveTest;    

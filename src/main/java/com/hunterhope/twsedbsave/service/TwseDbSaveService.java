@@ -12,6 +12,7 @@ import com.hunterhope.jsonrequest.exception.NoInternetException;
 import com.hunterhope.jsonrequest.exception.ResponseEmptyException;
 import com.hunterhope.jsonrequest.exception.ServerMaintainException;
 import com.hunterhope.twsedbsave.dao.SaveDao;
+import com.hunterhope.twsedbsave.dao.impl.SaveDaoImpl;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
 import com.hunterhope.twsedbsave.other.RemoveDuplicateDataUS;
 import com.hunterhope.twsedbsave.other.StringDateToLocalDateUS;
@@ -23,17 +24,16 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.SQLSyntaxErrorException;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.chrono.MinguoDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- *
- * @author user
+ * 此服務類任務是抓取網路TWSE網站上市股票交易資訊，並存入資料庫內<br>
+ * 每次對網路發出請求會有5~10秒的延遲。<br>
+ * @author hunterhope
  */
 public class TwseDbSaveService {
 
@@ -43,9 +43,9 @@ public class TwseDbSaveService {
     private final WaitClock waitClock;
     private final StringDateToLocalDateUS sdToLdUS;
 
-    public TwseDbSaveService() {
+    public TwseDbSaveService(JdbcTemplate jdbcTemplate) {
         this.jrs = new JsonRequestService();
-        this.saveDao = null;
+        this.saveDao = new SaveDaoImpl(jdbcTemplate);
         this.waitClock = new WaitClock();
         this.sdToLdUS=new StringDateToLocalDateUS();
     }
@@ -58,8 +58,8 @@ public class TwseDbSaveService {
     }
 
     /**
-     * 上網爬指定股票指定開始日期，爬指定幾個月份
-     *
+     * 上網爬指定股票指定開始日期，爬指定幾個月份。<br>
+     * 此方法會確保資料表存在，
      * @param stockId 股票代碼
      * @param stateDate 開始日期
      * @param months 開始日期後爬幾個月(包含開始日期月份)
