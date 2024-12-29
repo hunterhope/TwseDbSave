@@ -65,7 +65,8 @@ public class SaveDaoImpl implements SaveDao {
 
     @Override
     public String queryLatestDate(String tableName) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        String sql="SELECT date FROM %s ORDER BY date DESC LIMIT 1;";
+        return jdbcTemplate.queryForObject(String.format(sql, tableName), String.class);
     }
 
     @Override

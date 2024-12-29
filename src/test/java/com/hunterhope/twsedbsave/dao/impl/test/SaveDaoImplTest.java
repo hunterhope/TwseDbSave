@@ -37,7 +37,7 @@ public class SaveDaoImplTest {
     }
 
     /**
-     * Test of save method, of class SaveDaoImpl.
+     * 測試save功能
      */
     @Test
     public void testSave() throws Exception {
@@ -69,7 +69,7 @@ public class SaveDaoImplTest {
         System.out.print("測試利用jdbcTemplete建立一張資料表:");
         //準備物件
         String tableName = "stock_2323";
-        String dbName="testCreateTable.db";
+        String dbName = "testCreateTable.db";
         SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
         //跑起來
         instance.createTable(tableName);
@@ -84,7 +84,7 @@ public class SaveDaoImplTest {
      * 測試查詢資料庫內最舊日期
      */
     @Test
-    public void testQueryLastDate() throws Exception{
+    public void testQueryLastDate() throws Exception {
         System.out.print("測試查詢資料庫內最舊日期:");
         //建立物件
         String tableName = "stock_2323";
@@ -107,16 +107,32 @@ public class SaveDaoImplTest {
     }
 
     /**
-     * Test of queryLatestDate method, of class SaveDaoImpl.
+     * 測試取得最新日期
      */
     @Test
-    public void testQueryLatestDate() {
-        System.out.println("queryLatestDate");
-        String tableName = "";
-        SaveDaoImpl instance = null;
-        String expResult = "";
-        String result = instance.queryLatestDate(tableName);
-        assertEquals(expResult, result);
+    public void testQueryLatestDate() throws Exception {
+        String dbName = "testQueryLatestDate.db";
+        try {
+            System.out.print("測試查詢資料庫內最新日期:");
+            //建立物件
+            String tableName = "stock_2323";
+            SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
+            //準備待測資料
+            instance.createTable(tableName);
+            List<StockEveryDayInfo> data1 = createTestDataForOneMonth(113, 12, ThreadLocalRandom.current());
+            List<StockEveryDayInfo> data2 = createTestDataForOneMonth(112, 12, ThreadLocalRandom.current());
+            instance.save(tableName, data1);
+            instance.save(tableName, data2);
+            String expResult = "113/12/31";
+            //跑起來
+            String result = instance.queryLatestDate(tableName);
+            //驗證
+            assertEquals(expResult, result);
+            System.out.println("成功");
+        } finally {
+            //刪除資料庫
+            Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
+        }
     }
 
     /**
@@ -132,10 +148,10 @@ public class SaveDaoImplTest {
         List<String> result = instance.queryDates(tableName, yymmdd);
         assertEquals(expResult, result);
     }
-    
-    private JdbcTemplate createJdbcTemplate(String dbName){
+
+    private JdbcTemplate createJdbcTemplate(String dbName) {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setUrl("jdbc:sqlite:"+SQLITE_DB_ROOT_PATH.resolve(dbName));//建議資料庫用在Public大家都可以存取的地方
+        dataSource.setUrl("jdbc:sqlite:" + SQLITE_DB_ROOT_PATH.resolve(dbName));//建議資料庫用在Public大家都可以存取的地方
         return new JdbcTemplate(dataSource);
     }
 
