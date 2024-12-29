@@ -71,7 +71,9 @@ public class SaveDaoImpl implements SaveDao {
 
     @Override
     public List<String> queryDates(String tableName, String yymmdd) throws SQLException {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        String endYYMMDD=new StringBuffer(yymmdd).replace(yymmdd.length()-2, yymmdd.length(), "31").toString();
+        String sql="SELECT date FROM %s WHERE date >= '%s' AND date <= '%s';";
+        return jdbcTemplate.queryForList(String.format(sql, tableName,yymmdd,endYYMMDD), String.class);
     }
 
     /**

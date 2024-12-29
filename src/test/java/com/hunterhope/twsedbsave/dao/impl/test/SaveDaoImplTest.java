@@ -6,8 +6,10 @@ package com.hunterhope.twsedbsave.dao.impl.test;
 
 import com.hunterhope.twsedbsave.dao.impl.SaveDaoImpl;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
+import com.hunterhope.twsedbsave.other.StringDateToLocalDateUS;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.chrono.MinguoDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -144,17 +146,32 @@ public class SaveDaoImplTest {
     }
 
     /**
-     * Test of queryDates method, of class SaveDaoImpl.
+     * 測試取得指定某年月的資料
      */
     @Test
     public void testQueryDates() throws Exception {
-        System.out.println("queryDates");
-        String tableName = "";
-        String yymmdd = "";
-        SaveDaoImpl instance = null;
-        List<String> expResult = null;
-        List<String> result = instance.queryDates(tableName, yymmdd);
-        assertEquals(expResult, result);
+        String dbName = "testQueryDates.db";
+        try {
+            System.out.print("測試取得指定某年月的資料:");
+            //準備物件
+            String tableName = "stock_2323";
+            String yymmdd = "113/12/01";
+            SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
+            //建立測試資料
+            instance.createTable(tableName);
+            List<StockEveryDayInfo> data1=createTestDataForOneMonth(113, 12, ThreadLocalRandom.current());
+            List<StockEveryDayInfo> data2=createTestDataForOneMonth(113, 11, ThreadLocalRandom.current());
+            instance.save(tableName, data1);
+            instance.save(tableName, data2);
+            List<String> expResult = createOneMonthDate(yymmdd);
+            
+            List<String> result = instance.queryDates(tableName, yymmdd);
+            assertEquals(expResult, result);
+            System.out.println("成功");
+        } finally {
+            //刪除資料庫
+            Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
+        }
     }
 
     private JdbcTemplate createJdbcTemplate(String dbName) {
@@ -192,6 +209,17 @@ public class SaveDaoImplTest {
         stockEveryDayInfo.setVolume(String.format("%d", r.nextInt(1000, 9999)));
         stockEveryDayInfo.setPriceDif(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
         return stockEveryDayInfo;
+    }
+
+    private List<String> createOneMonthDate(String yymmdd) {
+        LocalDate s = new StringDateToLocalDateUS().change(yymmdd);
+        List<String> result = new ArrayList<>();
+        LocalDate e = s.plusMonths(1);
+        do{
+            result.add(MinguoDate.from(s).format(DateTimeFormatter.ofPattern("yyy/MM/dd")));
+            s=s.plusDays(1);
+        }while(s.isBefore(e));
+        return result;
     }
 
 }
