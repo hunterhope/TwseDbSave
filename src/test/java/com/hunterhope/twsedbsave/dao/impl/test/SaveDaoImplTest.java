@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,14 +31,9 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
  */
 public class SaveDaoImplTest {
 
-    private final DriverManagerDataSource dataSource;
-    private final JdbcTemplate jdbcTemplate;
-    private final String SQLITE_DB_NAME = "C:/Users/Public/twseTest.db";
+    private final Path SQLITE_DB_ROOT_PATH = Path.of("C:/Users/Public");
 
     public SaveDaoImplTest() {
-        dataSource = new DriverManagerDataSource();
-        dataSource.setUrl("jdbc:sqlite:" + SQLITE_DB_NAME);//建議資料庫用在Public大家都可以存取的地方
-        jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     /**
@@ -48,8 +44,9 @@ public class SaveDaoImplTest {
         System.out.print("save測試:");
         //準備物件
         String tableName = "stock_2323";
+        String dbName = "testSave.db";
         List<StockEveryDayInfo> data = createAnyYearTestDataForOneMonth();
-        SaveDaoImpl instance = new SaveDaoImpl(jdbcTemplate);
+        SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
         //建立表格
         instance.createTable(tableName);
         //預期結果
@@ -60,7 +57,7 @@ public class SaveDaoImplTest {
         //驗證
         assertArrayEquals(expResult, result);
         //刪除資料庫
-//        Files.deleteIfExists(Path.of(SQLITE_DB_NAME));
+        Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
         System.out.println("成功");
     }
 
@@ -72,14 +69,15 @@ public class SaveDaoImplTest {
         System.out.print("測試利用jdbcTemplete建立一張資料表:");
         //準備物件
         String tableName = "stock_2323";
-        SaveDaoImpl instance = new SaveDaoImpl(jdbcTemplate);
+        String dbName="testCreateTable.db";
+        SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
         //跑起來
         instance.createTable(tableName);
         //驗證
         instance.dropTable(tableName);
         System.out.println("成功");
         //刪除sqlite資料庫方式
-        Files.deleteIfExists(Path.of(SQLITE_DB_NAME));
+        Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
     }
 
     /**
@@ -90,7 +88,8 @@ public class SaveDaoImplTest {
         System.out.print("測試查詢資料庫內最舊日期:");
         //建立物件
         String tableName = "stock_2323";
-        SaveDaoImpl instance = new SaveDaoImpl(jdbcTemplate);
+        String dbName = "testQueryLastDate.db";
+        SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
         //準備待測資料
         instance.createTable(tableName);
         List<StockEveryDayInfo> data1 = createTestDataForOneMonth(113, 12, ThreadLocalRandom.current());
@@ -103,7 +102,7 @@ public class SaveDaoImplTest {
         //驗證
         assertEquals(expResult, result);
         //刪除資料庫
-        Files.deleteIfExists(Path.of(SQLITE_DB_NAME));
+        Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
         System.out.println("成功");
     }
 
@@ -132,6 +131,12 @@ public class SaveDaoImplTest {
         List<String> expResult = null;
         List<String> result = instance.queryDates(tableName, yymmdd);
         assertEquals(expResult, result);
+    }
+    
+    private JdbcTemplate createJdbcTemplate(String dbName){
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setUrl("jdbc:sqlite:"+SQLITE_DB_ROOT_PATH.resolve(dbName));//建議資料庫用在Public大家都可以存取的地方
+        return new JdbcTemplate(dataSource);
     }
 
     private List<StockEveryDayInfo> createAnyYearTestDataForOneMonth() {
