@@ -44,7 +44,7 @@ public class SaveDaoImplTest {
      * Test of save method, of class SaveDaoImpl.
      */
     @Test
-    public void testSave() throws Exception{
+    public void testSave() throws Exception {
         System.out.print("save測試:");
         //準備物件
         String tableName = "stock_2323";
@@ -60,7 +60,7 @@ public class SaveDaoImplTest {
         //驗證
         assertArrayEquals(expResult, result);
         //刪除資料庫
-        Files.deleteIfExists(Path.of(SQLITE_DB_NAME));
+//        Files.deleteIfExists(Path.of(SQLITE_DB_NAME));
         System.out.println("成功");
     }
 
@@ -83,18 +83,28 @@ public class SaveDaoImplTest {
     }
 
     /**
-     * Test of queryLastDate method, of class SaveDaoImpl.
+     * 測試查詢資料庫內最舊日期
      */
     @Test
-    public void testQueryLastDate() {
-        System.out.println("queryLastDate");
-        String tableName = "";
-        SaveDaoImpl instance = null;
-        String expResult = "";
+    public void testQueryLastDate() throws Exception{
+        System.out.print("測試查詢資料庫內最舊日期:");
+        //建立物件
+        String tableName = "stock_2323";
+        SaveDaoImpl instance = new SaveDaoImpl(jdbcTemplate);
+        //準備待測資料
+        instance.createTable(tableName);
+        List<StockEveryDayInfo> data1 = createTestDataForOneMonth(113, 12, ThreadLocalRandom.current());
+        List<StockEveryDayInfo> data2 = createTestDataForOneMonth(112, 12, ThreadLocalRandom.current());
+        instance.save(tableName, data1);
+        instance.save(tableName, data2);
+        String expResult = "112/12/01";
+        //跑起來
         String result = instance.queryLastDate(tableName);
+        //驗證
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        //刪除資料庫
+        Files.deleteIfExists(Path.of(SQLITE_DB_NAME));
+        System.out.println("成功");
     }
 
     /**
@@ -108,8 +118,6 @@ public class SaveDaoImplTest {
         String expResult = "";
         String result = instance.queryLatestDate(tableName);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -124,34 +132,36 @@ public class SaveDaoImplTest {
         List<String> expResult = null;
         List<String> result = instance.queryDates(tableName, yymmdd);
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     private List<StockEveryDayInfo> createAnyYearTestDataForOneMonth() {
-        List<StockEveryDayInfo> data = new ArrayList<>();
         Random r = ThreadLocalRandom.current();
         int yyy = r.nextInt(1, 1000);//3位數
         int month = r.nextInt(1, 13);//1~12月
+        return createTestDataForOneMonth(yyy, month, r);
+    }
+
+    private List<StockEveryDayInfo> createTestDataForOneMonth(int yyy, int month, Random r) {
+        List<StockEveryDayInfo> data = new ArrayList<>();
         MinguoDate md = MinguoDate.of(yyy, month, 1);
         MinguoDate endMd = md.plus(1, ChronoUnit.MONTHS);
         do {
             data.add(createRandomStockEveryDayInfo(md, r));
             md = md.plus(1, ChronoUnit.DAYS);
-        }while(md.isBefore(endMd));
-        
+        } while (md.isBefore(endMd));
+
         return data;
     }
 
     private StockEveryDayInfo createRandomStockEveryDayInfo(MinguoDate md, Random r) {
         StockEveryDayInfo stockEveryDayInfo = new StockEveryDayInfo();
         stockEveryDayInfo.setDate(md.format(DateTimeFormatter.ofPattern("yyy/MM/dd")));
-        stockEveryDayInfo.setOpen(String.format("%.2f", r.nextDouble(0.1, 1.0)*100));
-        stockEveryDayInfo.setHight(String.format("%.2f", r.nextDouble(0.1, 1.0)*100));
-        stockEveryDayInfo.setLow(String.format("%.2f", r.nextDouble(0.1, 1.0)*100));
-        stockEveryDayInfo.setClose(String.format("%.2f", r.nextDouble(0.1, 1.0)*100));
+        stockEveryDayInfo.setOpen(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
+        stockEveryDayInfo.setHight(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
+        stockEveryDayInfo.setLow(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
+        stockEveryDayInfo.setClose(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
         stockEveryDayInfo.setVolume(String.format("%d", r.nextInt(1000, 9999)));
-        stockEveryDayInfo.setPriceDif(String.format("%.2f", r.nextDouble(0.1, 1.0)*100));
+        stockEveryDayInfo.setPriceDif(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
         return stockEveryDayInfo;
     }
 
