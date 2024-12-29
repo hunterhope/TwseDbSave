@@ -6,8 +6,10 @@ package com.hunterhope.twsedbsave.dao.impl;
 
 import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -24,13 +26,35 @@ public class SaveDaoImpl implements SaveDao {
 
     @Override
     public int[] save(String tableName, List<StockEveryDayInfo> data) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        String sql = "INSERT INTO %s VALUES(?,?,?,?,?,?,?);";
+        int[] rowEffect = jdbcTemplate.batchUpdate(String.format(sql, tableName),
+                new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                StockEveryDayInfo info = data.get(i);
+                ps.setString(1, info.getDate());
+                ps.setString(2, info.getVolume());
+                ps.setString(3, info.getOpen());
+                ps.setString(4, info.getHight());
+                ps.setString(5, info.getLow());
+                ps.setString(6, info.getClose());
+                ps.setString(7, info.getPriceDif());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return data.size();
+            }
+
+        });
+
+        return rowEffect;
     }
 
     @Override
     public void createTable(String tableName) {
         String sql = "CREATE TABLE IF NOT EXISTS %s (date TEXT,volume TEXT NOT NULL,open TEXT NOT NULL,hight TEXT NOT NULL,low TEXT NOT NULL,close TEXT NOT NULL,price_dif TEXT NOT NULL,PRIMARY KEY(date))";
-        jdbcTemplate.execute(String.format(sql,tableName));
+        jdbcTemplate.execute(String.format(sql, tableName));
     }
 
     @Override
@@ -47,12 +71,12 @@ public class SaveDaoImpl implements SaveDao {
     public List<String> queryDates(String tableName, String yymmdd) throws SQLException {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
-    
+
     /**
      * 給測試程式使用
      */
-    public void dropTable(String tableName){
-        String sql="DROP TABLE %s";
+    public void dropTable(String tableName) {
+        String sql = "DROP TABLE %s";
         jdbcTemplate.execute(String.format(sql, tableName));
     }
 }
