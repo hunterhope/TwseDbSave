@@ -6,10 +6,8 @@ package com.hunterhope.twsedbsave.dao.impl.test;
 
 import com.hunterhope.twsedbsave.dao.impl.SaveDaoImpl;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Period;
 import java.time.chrono.MinguoDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -18,8 +16,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.IntStream;
-import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -41,24 +37,28 @@ public class SaveDaoImplTest {
      */
     @Test
     public void testSave() throws Exception {
-        System.out.print("save測試:");
-        //準備物件
-        String tableName = "stock_2323";
         String dbName = "testSave.db";
-        List<StockEveryDayInfo> data = createAnyYearTestDataForOneMonth();
-        SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
-        //建立表格
-        instance.createTable(tableName);
-        //預期結果
-        int[] expResult = new int[data.size()];
-        Arrays.fill(expResult, 1);
-        //跑起來
-        int[] result = instance.save(tableName, data);
-        //驗證
-        assertArrayEquals(expResult, result);
-        //刪除資料庫
-        Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
-        System.out.println("成功");
+        try {
+            System.out.print("save測試:");
+            //準備物件
+            String tableName = "stock_2323";
+
+            List<StockEveryDayInfo> data = createAnyYearTestDataForOneMonth();
+            SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
+            //建立表格
+            instance.createTable(tableName);
+            //預期結果
+            int[] expResult = new int[data.size()];
+            Arrays.fill(expResult, 1);
+            //跑起來
+            int[] result = instance.save(tableName, data);
+            //驗證
+            assertArrayEquals(expResult, result);
+            System.out.println("成功");
+        } finally {
+            //刪除資料庫
+            Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
+        }
     }
 
     /**
@@ -66,18 +66,22 @@ public class SaveDaoImplTest {
      */
     @Test
     public void testCreateTable() throws Exception {
-        System.out.print("測試利用jdbcTemplete建立一張資料表:");
-        //準備物件
-        String tableName = "stock_2323";
         String dbName = "testCreateTable.db";
-        SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
-        //跑起來
-        instance.createTable(tableName);
-        //驗證
-        instance.dropTable(tableName);
-        System.out.println("成功");
-        //刪除sqlite資料庫方式
-        Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
+        try {
+            System.out.print("測試利用jdbcTemplete建立一張資料表:");
+            //準備物件
+            String tableName = "stock_2323";
+            SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
+            //跑起來
+            instance.createTable(tableName);
+            //驗證
+            instance.dropTable(tableName);
+            System.out.println("成功");
+        } finally {
+            //刪除sqlite資料庫方式
+            Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
+        }
+
     }
 
     /**
@@ -85,25 +89,29 @@ public class SaveDaoImplTest {
      */
     @Test
     public void testQueryLastDate() throws Exception {
-        System.out.print("測試查詢資料庫內最舊日期:");
-        //建立物件
-        String tableName = "stock_2323";
         String dbName = "testQueryLastDate.db";
-        SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
-        //準備待測資料
-        instance.createTable(tableName);
-        List<StockEveryDayInfo> data1 = createTestDataForOneMonth(113, 12, ThreadLocalRandom.current());
-        List<StockEveryDayInfo> data2 = createTestDataForOneMonth(112, 12, ThreadLocalRandom.current());
-        instance.save(tableName, data1);
-        instance.save(tableName, data2);
-        String expResult = "112/12/01";
-        //跑起來
-        String result = instance.queryLastDate(tableName);
-        //驗證
-        assertEquals(expResult, result);
-        //刪除資料庫
-        Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
-        System.out.println("成功");
+        try {
+            System.out.print("測試查詢資料庫內最舊日期:");
+            //建立物件
+            String tableName = "stock_2323";
+
+            SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
+            //準備待測資料
+            instance.createTable(tableName);
+            List<StockEveryDayInfo> data1 = createTestDataForOneMonth(113, 12, ThreadLocalRandom.current());
+            List<StockEveryDayInfo> data2 = createTestDataForOneMonth(112, 12, ThreadLocalRandom.current());
+            instance.save(tableName, data1);
+            instance.save(tableName, data2);
+            String expResult = "112/12/01";
+            //跑起來
+            String result = instance.queryLastDate(tableName);
+            //驗證
+            assertEquals(expResult, result);
+            System.out.println("成功");
+        } finally {
+            //刪除資料庫
+            Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
+        }
     }
 
     /**
