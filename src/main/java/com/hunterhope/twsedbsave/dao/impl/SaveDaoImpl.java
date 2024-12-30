@@ -8,7 +8,10 @@ import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.SQLSyntaxErrorException;
 import java.util.List;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -50,7 +53,12 @@ public class SaveDaoImpl implements SaveDao {
             });
 
             return rowEffect;
-        } catch (Exception ex) {
+        } catch (UncategorizedSQLException ex) {
+            if(ex.getMessage().contains("no such table")){
+                throw new SQLSyntaxErrorException(ex);
+            }else if(ex.getMessage().contains("SQLITE_CONSTRAINT_PRIMARYKEY")){
+                throw new SQLIntegrityConstraintViolationException(ex);
+            }
             throw new SQLException(ex);
         }
     }

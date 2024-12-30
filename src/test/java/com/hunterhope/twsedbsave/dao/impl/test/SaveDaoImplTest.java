@@ -9,6 +9,9 @@ import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
 import com.hunterhope.twsedbsave.other.StringDateToLocalDateUS;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.SQLSyntaxErrorException;
 import java.time.LocalDate;
 import java.time.chrono.MinguoDate;
 import java.time.format.DateTimeFormatter;
@@ -63,6 +66,60 @@ public class SaveDaoImplTest {
         }
     }
 
+    /**
+     * 測試存入資料時,發生沒有該表格存在，會丟出SQLSyntaxErrorException
+     */
+    @Test
+    public void testSave_throw_SQLSyntaxErrorException() throws Exception {
+        String dbName = "testSave_throw_SQLSyntaxErrorException.db";
+        try {
+            System.out.print("save時，無該表格例外發生測試:");
+            //準備物件
+            String tableName = "stock_2323";
+
+            List<StockEveryDayInfo> data = createAnyYearTestDataForOneMonth();
+            SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
+            //跑起來
+            instance.save(tableName, data);
+            fail("沒發生例外");
+
+        } catch (SQLSyntaxErrorException ex) {
+            //驗證
+            System.out.println("成功");
+        } finally {
+            //刪除資料庫
+            Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
+        }
+    }
+    /**
+     * 測試存入資料時，發生資料重複問題，丟出SQLIntegrityConstraintViolationException
+     */
+    @Test
+    public void testSave_throw_SQLIntegrityConstraintViolationException()throws Exception{
+        String dbName = "testSave_throw_SQLIntegrityConstraintViolationException.db";
+        try {
+            System.out.print("save時，資料有重複丟出例外:");
+            //準備物件
+            String tableName = "stock_2323";
+            
+            List<StockEveryDayInfo> data = createAnyYearTestDataForOneMonth();
+            SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
+            //建立表格
+            instance.createTable(tableName);
+            //建立預設資料
+            instance.save(tableName, data);
+            //跑起來，存入重複資料
+            instance.save(tableName, data);
+            fail("沒發生例外");
+
+        } catch (SQLIntegrityConstraintViolationException ex) {
+            //驗證
+            System.out.println("成功");
+        } finally {
+            //刪除資料庫
+            Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
+        }
+    }
     /**
      * 測試利用jdbcTemplete建立一張資料表
      */
@@ -159,12 +216,12 @@ public class SaveDaoImplTest {
             SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
             //建立測試資料
             instance.createTable(tableName);
-            List<StockEveryDayInfo> data1=createTestDataForOneMonth(113, 12, ThreadLocalRandom.current());
-            List<StockEveryDayInfo> data2=createTestDataForOneMonth(113, 11, ThreadLocalRandom.current());
+            List<StockEveryDayInfo> data1 = createTestDataForOneMonth(113, 12, ThreadLocalRandom.current());
+            List<StockEveryDayInfo> data2 = createTestDataForOneMonth(113, 11, ThreadLocalRandom.current());
             instance.save(tableName, data1);
             instance.save(tableName, data2);
             List<String> expResult = createOneMonthDate(yymmdd);
-            
+
             List<String> result = instance.queryDates(tableName, yymmdd);
             assertEquals(expResult, result);
             System.out.println("成功");
@@ -215,10 +272,10 @@ public class SaveDaoImplTest {
         LocalDate s = new StringDateToLocalDateUS().change(yymmdd);
         List<String> result = new ArrayList<>();
         LocalDate e = s.plusMonths(1);
-        do{
+        do {
             result.add(MinguoDate.from(s).format(DateTimeFormatter.ofPattern("yyy/MM/dd")));
-            s=s.plusDays(1);
-        }while(s.isBefore(e));
+            s = s.plusDays(1);
+        } while (s.isBefore(e));
         return result;
     }
 

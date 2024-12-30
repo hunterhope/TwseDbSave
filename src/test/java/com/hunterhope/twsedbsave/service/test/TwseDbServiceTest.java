@@ -112,7 +112,7 @@ public class TwseDbServiceTest {
         TwseDbSaveService tds = new TwseDbSaveService(jrs, saveDao, waitClock);
         //模擬依賴行為
         mock_request_hasData();
-        Mockito.when(saveDao.save(Mockito.any(), Mockito.any())).thenThrow(SQLException.class).thenReturn(new int[]{});
+        Mockito.when(saveDao.save(Mockito.any(), Mockito.any())).thenThrow(SQLSyntaxErrorException.class).thenReturn(new int[]{});
         //跑起來
         tds.crawl(stockId, LocalDate.now(), months);
         //驗證
