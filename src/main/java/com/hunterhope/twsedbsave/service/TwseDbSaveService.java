@@ -88,7 +88,8 @@ public class TwseDbSaveService {
                 }
             } catch (NoInternetException | ServerMaintainException | DataClassFieldNameErrorException | ResponseEmptyException ex) {
                 throw new TwseDbSaveException(ex);
-            } catch (SQLSyntaxErrorException ex) {
+            } catch (SQLSyntaxErrorException ex) {//由於底層使用哪個框架不確定，不一定會有此例外，但一定會有SQLException
+            } catch (SQLException ex) {
                 try {
                     //建立表格
                     saveDao.createTable(tableName);
@@ -97,8 +98,6 @@ public class TwseDbSaveService {
                 } catch (SQLException ex1) {
                     throw new RuntimeException(ex1);
                 }
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
             }
             //每次上網爬資料間隔5~10秒
             if (months > 1) {//只抓取1個月則不用等
