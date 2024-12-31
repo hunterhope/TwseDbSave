@@ -87,7 +87,7 @@ public class TwseDbSaveService {
                 throw new TwseDbSaveException(ex);
             } 
             //每次上網爬資料間隔5~10秒
-            if (months > 1) {//只抓取1個月則不用等
+            if (i!=months-1) {//只抓取1個月則不用等，最後一次不用等
                 waitClock.waitForSecurity(5, 11);
             }
         }
@@ -125,6 +125,7 @@ public class TwseDbSaveService {
             do {
                 crawl(stockId, lastDate, 1);
                 lastDate = lastDate.minusMonths(1);
+                waitClock.waitForSecurity(5, 11);
             } while (true);
         } catch (NotMatchDataException ex) {
             //更新結束
