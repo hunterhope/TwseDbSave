@@ -6,10 +6,11 @@ package com.hunterhope.twsedbsave.dao.impl;
 
 import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
+import com.hunterhope.twsedbsave.other.StringDateToLocalDateUS;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
-import java.sql.SQLSyntaxErrorException;
+import java.time.chrono.MinguoDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -51,16 +52,27 @@ public class SaveDaoImpl implements SaveDao {
                 }
 
             });
-
             return rowEffect;
         } catch (UncategorizedSQLException ex) {
-            if(ex.getMessage().contains("no such table")){
-                throw new SQLSyntaxErrorException(ex);
-            }else if(ex.getMessage().contains("SQLITE_CONSTRAINT_PRIMARYKEY")){
-                throw new SQLIntegrityConstraintViolationException(ex);
+            if (ex.getMessage().contains("no such table")) {
+                createTable(tableName);
+                return save(tableName, data);
+
+            } else if (ex.getMessage().contains("SQLITE_CONSTRAINT_PRIMARYKEY")) {
+                removeDuplicateData(tableName, data);
+                return save(tableName, data);
             }
             throw new SQLException(ex);
         }
+    }
+
+    private void removeDuplicateData(String tableName, List<StockEveryDayInfo> data) throws SQLException {
+        String saveYYMMDD = data.get(0).getDate();
+        MinguoDate md = MinguoDate.from(new StringDateToLocalDateUS().change(saveYYMMDD).withDayOfMonth(1));
+        //查詢資料庫此月份資料出來
+        List<String> dbDates = queryDates(tableName, md.format(DateTimeFormatter.ofPattern("yyy/MM/dd")));
+        //排除重複資料
+        data.removeIf(e -> dbDates.contains(e.getDate()));
     }
 
     @Override
@@ -95,11 +107,11 @@ public class SaveDaoImpl implements SaveDao {
 
     @Override
     public List<String> queryDates(String tableName, String yymmdd) throws SQLException {
-        try{
-        String endYYMMDD = new StringBuffer(yymmdd).replace(yymmdd.length() - 2, yymmdd.length(), "31").toString();
-        String sql = "SELECT date FROM %s WHERE date >= '%s' AND date <= '%s';";
-        return jdbcTemplate.queryForList(String.format(sql, tableName, yymmdd, endYYMMDD), String.class);
-        }catch(Exception ex){
+        try {
+            String endYYMMDD = new StringBuffer(yymmdd).replace(yymmdd.length() - 2, yymmdd.length(), "31").toString();
+            String sql = "SELECT date FROM %s WHERE date >= '%s' AND date <= '%s';";
+            return jdbcTemplate.queryForList(String.format(sql, tableName, yymmdd, endYYMMDD), String.class);
+        } catch (Exception ex) {
             throw new SQLException(ex);
         }
     }

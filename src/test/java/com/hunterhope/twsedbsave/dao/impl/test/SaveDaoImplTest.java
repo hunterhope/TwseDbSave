@@ -67,13 +67,13 @@ public class SaveDaoImplTest {
     }
 
     /**
-     * 測試存入資料時,發生沒有該表格存在，會丟出SQLSyntaxErrorException
+     * 測試存入資料時,表格不存在也可以自動建立在存入
      */
     @Test
-    public void testSave_throw_SQLSyntaxErrorException() throws Exception {
-        String dbName = "testSave_throw_SQLSyntaxErrorException.db";
+    public void testSave_no_such_table() throws Exception {
+        String dbName = "testSave_no_such_table.db";
         try {
-            System.out.print("save時，無該表格例外發生測試:");
+            System.out.print("save時，無該表格會自動建立:");
             //準備物件
             String tableName = "stock_2323";
 
@@ -81,27 +81,28 @@ public class SaveDaoImplTest {
             SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
             //跑起來
             instance.save(tableName, data);
-            fail("沒發生例外");
-
-        } catch (SQLSyntaxErrorException ex) {
-            //驗證
+            //驗證，可以正確執行完畢
             System.out.println("成功");
+        } catch (SQLException ex) {
+            //驗證
+            fail("發生例外"+ex.getMessage());
         } finally {
             //刪除資料庫
             Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
         }
     }
+
     /**
-     * 測試存入資料時，發生資料重複問題，丟出SQLIntegrityConstraintViolationException
+     * 測試存入資料時，發生資料重複問題，會排除重複再存入
      */
     @Test
-    public void testSave_throw_SQLIntegrityConstraintViolationException()throws Exception{
-        String dbName = "testSave_throw_SQLIntegrityConstraintViolationException.db";
+    public void testSave_has_duplicate_data() throws Exception {
+        String dbName = "testSave_has_duplicate_data.db";
         try {
-            System.out.print("save時，資料有重複丟出例外:");
+            System.out.print("save時，資料有重複會排除重複再存入:");
             //準備物件
             String tableName = "stock_2323";
-            
+
             List<StockEveryDayInfo> data = createAnyYearTestDataForOneMonth();
             SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
             //建立表格
@@ -110,16 +111,18 @@ public class SaveDaoImplTest {
             instance.save(tableName, data);
             //跑起來，存入重複資料
             instance.save(tableName, data);
-            fail("沒發生例外");
+             //驗證
+             System.out.println("成功");
 
-        } catch (SQLIntegrityConstraintViolationException ex) {
+        } catch (SQLException ex) {
             //驗證
-            System.out.println("成功");
+            fail("沒發生例外"+ex.getMessage());
         } finally {
             //刪除資料庫
             Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
         }
     }
+
     /**
      * 測試利用jdbcTemplete建立一張資料表
      */

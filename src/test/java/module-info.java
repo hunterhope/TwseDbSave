@@ -11,6 +11,5 @@ module TwseDbSaveTest {
     requires org.junit.jupiter.api;
     requires org.mockito;
     opens com.hunterhope.twsedbsave.service.test;
-    opens com.hunterhope.twsedbsave.other.test;
     opens com.hunterhope.twsedbsave.dao.impl.test;
 }

@@ -69,57 +69,57 @@ public class TwseDbServiceTest {
         Mockito.verify(saveDao, Mockito.times(times)).save(Mockito.any(), Mockito.any());
     }
 
-    /**
-     * 測試當資料庫存入相同資料產生主鍵重複的情況,會執行排除重複資料動作在存入資料庫
-     */
-    @Test
-    public void testCrawl_has_duplicate_data() throws Exception {
-        System.out.print("測試資料庫發生資料重複例外,有執行排除後再存入動作:");
-        //準備物件
-        String stockId = "2323";
-        int months = 1;
-        hasData.setData(List.of(List.of("113/12/02",
-                "7,976,208",
-                "89,738,569",
-                "11.30",
-                "11.40",
-                "11.10",
-                "11.40",
-                "+0.15",
-                "2,220")
-        ));
-        TwseDbSaveService tds = new TwseDbSaveService(jrs, saveDao, waitClock);
-        //模擬依賴行為
-        mock_request_hasData();
-        Mockito.when(saveDao.save(Mockito.any(), Mockito.any())).thenThrow(SQLIntegrityConstraintViolationException.class).thenReturn(new int[]{});
-        Mockito.when(saveDao.queryDates(Mockito.any(), Mockito.any())).thenReturn(List.of());
-        //跑起來
-        tds.crawl(stockId, LocalDate.now(), months);
-        //驗證
-        verifyDaoSave(2);
-        System.out.println("成功");
-    }
+//    /**
+//     * 測試當資料庫存入相同資料產生主鍵重複的情況,會執行排除重複資料動作在存入資料庫
+//     */
+//    @Test
+//    public void testCrawl_has_duplicate_data() throws Exception {
+//        System.out.print("測試資料庫發生資料重複例外,有執行排除後再存入動作:");
+//        //準備物件
+//        String stockId = "2323";
+//        int months = 1;
+//        hasData.setData(List.of(List.of("113/12/02",
+//                "7,976,208",
+//                "89,738,569",
+//                "11.30",
+//                "11.40",
+//                "11.10",
+//                "11.40",
+//                "+0.15",
+//                "2,220")
+//        ));
+//        TwseDbSaveService tds = new TwseDbSaveService(jrs, saveDao, waitClock);
+//        //模擬依賴行為
+//        mock_request_hasData();
+//        Mockito.when(saveDao.save(Mockito.any(), Mockito.any())).thenThrow(SQLIntegrityConstraintViolationException.class).thenReturn(new int[]{});
+//        Mockito.when(saveDao.queryDates(Mockito.any(), Mockito.any())).thenReturn(List.of());
+//        //跑起來
+//        tds.crawl(stockId, LocalDate.now(), months);
+//        //驗證
+//        verifyDaoSave(2);
+//        System.out.println("成功");
+//    }
 
     /**
      * 測試第一次抓取到網路資料,要存入資料庫卻沒有表格的狀態
      */
-    @Test
-    public void testCrawl_not_exist_table() throws Exception {
-        System.out.print("測試第一次抓取到網路資料,要存入資料庫卻沒有表格的狀態:");
-        //準備物件
-        String stockId = "2323";
-        int months = 2;
-        TwseDbSaveService tds = new TwseDbSaveService(jrs, saveDao, waitClock);
-        //模擬依賴行為
-        mock_request_hasData();
-        Mockito.when(saveDao.save(Mockito.any(), Mockito.any())).thenThrow(SQLSyntaxErrorException.class).thenReturn(new int[]{});
-        //跑起來
-        tds.crawl(stockId, LocalDate.now(), months);
-        //驗證
-        verifyDaoCreateTable(1);
-        verifyDaoSave(3);//因為是抓取2個月資料,所以會發生3次存取
-        System.out.println("成功");
-    }
+//    @Test
+//    public void testCrawl_not_exist_table() throws Exception {
+//        System.out.print("測試第一次抓取到網路資料,要存入資料庫卻沒有表格的狀態:");
+//        //準備物件
+//        String stockId = "2323";
+//        int months = 2;
+//        TwseDbSaveService tds = new TwseDbSaveService(jrs, saveDao, waitClock);
+//        //模擬依賴行為
+//        mock_request_hasData();
+//        Mockito.when(saveDao.save(Mockito.any(), Mockito.any())).thenThrow(SQLSyntaxErrorException.class).thenReturn(new int[]{});
+//        //跑起來
+//        tds.crawl(stockId, LocalDate.now(), months);
+//        //驗證
+//        verifyDaoCreateTable(1);
+//        verifyDaoSave(3);//因為是抓取2個月資料,所以會發生3次存取
+//        System.out.println("成功");
+//    }
 
     /**
      * 測試上網爬資料2個月
