@@ -61,7 +61,7 @@ public class TwseDbSaveService {
      * @param stateDate 開始日期
      * @param months 開始日期後爬幾個月(包含開始日期月份)
      * @throws TwseDbSaveException 包裝底層例外用
-     * @throws NotMatchDataException 查詢回來如果沒有符合的資料，有可能是此股票代號錯誤，或沒有該股票的交易紀錄了
+     * @throws NotMatchDataException 查詢回來如果沒有符合的資料，有可能是此股票代號錯誤，或沒有該股票本月的交易紀錄，需要使用者自己處理
      */
     public void crawl(String stockId, LocalDate stateDate, int months) throws TwseDbSaveException, NotMatchDataException {
         String tableName = combinTableName(stockId);
@@ -80,7 +80,7 @@ public class TwseDbSaveService {
                     data = convert(omp);
                     //存入資料庫
                     saveDao.save(tableName, data);
-                } else {
+                } else if(i==months-1){//抓取次數等於最後一次時，才可以判定為沒有資料
                     throw new NotMatchDataException(omp.getStat());
                 }
             } catch (NoInternetException | ServerMaintainException | DataClassFieldNameErrorException | ResponseEmptyException |SQLException ex) {
@@ -115,7 +115,8 @@ public class TwseDbSaveService {
     }
 
     /**
-     * 自動更新歷史資料，到抓不到資料
+     * 自動更新歷史資料，到抓不到資料<br>
+     * 使用此方法要自己確認資料表已經存在<br>
      */
     public void updateHistory(String stockId) throws TwseDbSaveException {
         try {
@@ -128,7 +129,7 @@ public class TwseDbSaveService {
                 waitClock.waitForSecurity(5, 11);
             } while (true);
         } catch (NotMatchDataException ex) {
-            //更新結束
+            //crawl丟出這例外,可以判定為更新結束
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
@@ -144,6 +145,7 @@ public class TwseDbSaveService {
 
     /**
      * 方便測試用,建議使用updateToLatest(String stockId)
+     * 使用此方法要自己確認資料表已經存在<br>
      */
     public void updateToLatest(String stockId, LocalDate nowDate) throws TwseDbSaveException {
 
@@ -160,7 +162,8 @@ public class TwseDbSaveService {
     }
 
     /**
-     * 自動更新到最新資料
+     * 自動更新到最新資料<br>
+     * 使用此方法要自己確認資料表已經存在<br>
      */
     public void updateToLatest(String stockId) throws TwseDbSaveException {
         updateToLatest(stockId, LocalDate.now());

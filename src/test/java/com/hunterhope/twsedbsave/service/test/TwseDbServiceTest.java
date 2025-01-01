@@ -191,5 +191,26 @@ public class TwseDbServiceTest {
         verifyWaitClockAction(12);
         System.out.println("成功");
     }
-
+    
+    @Test
+    public void testUpdateToLatest_2_month_but_first_month_no_data() throws Exception{
+        System.out.print("測試上網更新最新資料2個月,但第一個月分無資料:");
+        //準備物件
+        String stockId = "2323";
+        TwseDbSaveService instance = new TwseDbSaveService(jrs, saveDao, waitClock);
+        //模擬依賴行為
+        UrlAndQueryString noDataQueryString = new UrlAndQueryString("https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY");
+        noDataQueryString.addParam("stockNo", stockId);
+        noDataQueryString.addParam("response", "json");
+        noDataQueryString.addParam("date", "20240130");
+        mock_request_hasData();
+        mock_request_noData(noDataQueryString);
+        mock_db_latestDate("112/12/23");
+        //跑起來
+        instance.updateToLatest(stockId, LocalDate.of(2024, 1, 30));
+        //驗證
+        verifyDaoSave(1);
+        verifyWaitClockAction(1);
+        System.out.println("成功");
+    }
 }
