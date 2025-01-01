@@ -104,4 +104,8 @@ public class StockEveryDayInfo {
     public String toString() {
         return "StockEveryDayInfo{" + "date=" + date + ", volume=" + volume + ", open=" + open + ", hight=" + hight + ", low=" + low + ", close=" + close + ", priceDif=" + priceDif + '}';
     }
+
+    public static String combinTableName(String stockId) {
+        return StockEveryDayInfo.TABLE_NAME_PREFIX + stockId;
+    }
 }

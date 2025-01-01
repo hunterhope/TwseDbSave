@@ -4,23 +4,28 @@
  */
 package com.hunterhope.twsedbsave.service.data;
 
+import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
+import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  *
  * @author user
  */
 public class OneMonthPrice {
+
     private String stat;
     private String date;
     private String title;
     private List<String> fields;
     private List<List<String>> data;
 
-    public boolean hasData(){
-        return "OK".equalsIgnoreCase(stat) && data!=null;
+    private boolean hasData() {
+        return "OK".equalsIgnoreCase(stat) && data != null;
     }
+
     public String getStat() {
         return stat;
     }
@@ -102,5 +107,22 @@ public class OneMonthPrice {
     @Override
     public String toString() {
         return "OneMonthPrice{" + "stat=" + stat + ", date=" + date + ", title=" + title + ", fields=" + fields + ", data=" + data + '}';
+    }
+
+    public List<StockEveryDayInfo> convertToStockEveryDayInfo() throws NotMatchDataException {
+        if (hasData()) {
+            return data.stream().map(items -> {
+                StockEveryDayInfo obj = new StockEveryDayInfo();
+                obj.setDate(items.get(0));
+                obj.setVolume(items.get(1));
+                obj.setOpen(items.get(3));
+                obj.setHight(items.get(4));
+                obj.setLow(items.get(5));
+                obj.setClose(items.get(6));
+                obj.setPriceDif(items.get(7));
+                return obj;
+            }).collect(Collectors.toList());
+        }
+        throw new NotMatchDataException(stat);
     }
 }

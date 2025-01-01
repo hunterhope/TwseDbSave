@@ -14,6 +14,7 @@ import com.hunterhope.jsonrequest.exception.ServerMaintainException;
 import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.dao.impl.SaveDaoImpl;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
+import static com.hunterhope.twsedbsave.entity.StockEveryDayInfo.combinTableName;
 import com.hunterhope.twsedbsave.other.StringDateToLocalDateUS;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
@@ -24,12 +25,13 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * 此服務類任務是抓取網路TWSE網站上市股票交易資訊，並存入資料庫內<br>
  * 每次對網路發出請求會有5~10秒的延遲。<br>
+ *
  * @author hunterhope
  */
 public class TwseDbSaveService {
@@ -44,74 +46,63 @@ public class TwseDbSaveService {
         this.jrs = new JsonRequestService();
         this.saveDao = new SaveDaoImpl(jdbcTemplate);
         this.waitClock = new WaitClock();
-        this.sdToLdUS=new StringDateToLocalDateUS();
+        this.sdToLdUS = new StringDateToLocalDateUS();
     }
 
     public TwseDbSaveService(JsonRequestService jrs, SaveDao saveDao, WaitClock waitClock1) {
         this.jrs = jrs;
         this.saveDao = saveDao;
         this.waitClock = waitClock1;
-        this.sdToLdUS=new StringDateToLocalDateUS();
+        this.sdToLdUS = new StringDateToLocalDateUS();
     }
 
     /**
      * 上網爬指定股票指定開始日期，爬指定幾個月份。<br>
      * 此方法會確保資料表存在，
+     *
      * @param stockId 股票代碼
      * @param stateDate 開始日期
      * @param months 開始日期後爬幾個月(包含開始日期月份)
      * @throws TwseDbSaveException 包裝底層例外用
-     * @throws NotMatchDataException 查詢回來如果沒有符合的資料，有可能是此股票代號錯誤，或沒有該股票本月的交易紀錄，需要使用者自己處理
+     * @throws NotMatchDataException
+     * 查詢回來如果沒有符合的資料，有可能是此股票代號錯誤，或沒有該股票本月的交易紀錄，需要使用者自己處理
      */
     public void crawl(String stockId, LocalDate stateDate, int months) throws TwseDbSaveException, NotMatchDataException {
         String tableName = combinTableName(stockId);
-        List<StockEveryDayInfo> data = null;
-        //建立UrlAndQueryString
-        UrlAndQueryString qs = new UrlAndQueryString(TWSE_STOCK_PRICE_BASE_URL);
-        qs.addParam("stockNo", stockId);
-        qs.addParam("response", "json");
+        List<StockEveryDayInfo> data;
+        UrlAndQueryString qs = createUrlAndQueryString(stockId);
+        int lastTimeLoop = months - 1;
         for (int i = 0; i < months; i++) {
             qs.addParam("date", stateDate.minusMonths(i).format(DateTimeFormatter.BASIC_ISO_DATE));
             try {
                 //上網爬資料
                 OneMonthPrice omp = jrs.getData(qs, OneMonthPrice.class);
-                if (omp.hasData()) {
-                    //轉換成資料庫表格形式
-                    data = convert(omp);
-                    //存入資料庫
-                    saveDao.save(tableName, data);
-                } else if(i==months-1){//抓取次數等於最後一次時，才可以判定為沒有資料
-                    throw new NotMatchDataException(omp.getStat());
-                }
-            } catch (NoInternetException | ServerMaintainException | DataClassFieldNameErrorException | ResponseEmptyException |SQLException ex) {
+                //轉換成資料庫表格形式
+                data = omp.convertToStockEveryDayInfo();
+                //存入資料庫
+                saveDao.save(tableName, data);
+            } catch (NoInternetException | ServerMaintainException | DataClassFieldNameErrorException | ResponseEmptyException ex) {
                 throw new TwseDbSaveException(ex);
-            } 
+            } catch (NotMatchDataException ex) {
+                if (i == lastTimeLoop) {//抓取次數等於最後一次時，才可以判定為沒有資料
+                    throw ex;
+                }
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
             //每次上網爬資料間隔5~10秒
-            if (i!=months-1) {//只抓取1個月則不用等，最後一次不用等
+            if (i != lastTimeLoop) {//只抓取1個月則不用等，最後一次不用等
                 waitClock.waitForSecurity(5, 11);
             }
         }
     }
 
-    private List<StockEveryDayInfo> convert(OneMonthPrice omp) {
-        return omp.getData().stream()
-                .map(items -> {
-                    StockEveryDayInfo obj = new StockEveryDayInfo();
-                    obj.setDate(items.get(0));
-                    obj.setVolume(items.get(1));
-                    obj.setOpen(items.get(3));
-                    obj.setHight(items.get(4));
-                    obj.setLow(items.get(5));
-                    obj.setClose(items.get(6));
-                    obj.setPriceDif(items.get(7));
-                    return obj;
-                })
-                .collect(Collectors.toList());
-
-    }
-
-    private String combinTableName(String stockId) {
-        return StockEveryDayInfo.TABLE_NAME_PREFIX + stockId;
+    private UrlAndQueryString createUrlAndQueryString(String stockId) {
+        //建立UrlAndQueryString
+        UrlAndQueryString qs = new UrlAndQueryString(TWSE_STOCK_PRICE_BASE_URL);
+        qs.addParam("stockNo", stockId);
+        qs.addParam("response", "json");
+        return qs;
     }
 
     /**
@@ -130,7 +121,7 @@ public class TwseDbSaveService {
             } while (true);
         } catch (NotMatchDataException ex) {
             //crawl丟出這例外,可以判定為更新結束
-        } catch (SQLException ex) {
+        } catch (SQLException ex) {//若產生SQL例外,應判定為城市邏輯錯誤,所以丟出RuntimeException
             throw new RuntimeException(ex);
         }
     }
@@ -144,8 +135,7 @@ public class TwseDbSaveService {
     }
 
     /**
-     * 方便測試用,建議使用updateToLatest(String stockId)
-     * 使用此方法要自己確認資料表已經存在<br>
+     * 方便測試用,建議使用updateToLatest(String stockId) 使用此方法要自己確認資料表已經存在<br>
      */
     public void updateToLatest(String stockId, LocalDate nowDate) throws TwseDbSaveException {
 
@@ -156,16 +146,30 @@ public class TwseDbSaveService {
             long difMonths = ChronoUnit.MONTHS.between(YearMonth.from(dbLatestDate), YearMonth.from(nowDate)) + 1;//+1是因為dbLatestDate的月份也要抓取用來確保資料完整
             crawl(stockId, nowDate, (int) difMonths);
         } catch (NotMatchDataException ex) {
-        } catch (SQLException ex) {
+            //crawl丟出這例外,可以判定為更新結束
+        } catch (SQLException ex) {//若產生SQL例外,應判定為城市邏輯錯誤,所以丟出RuntimeException
             throw new RuntimeException(ex);
         }
     }
-
+    
+    private void updateStructure(UpdateAction action){
+         try {
+            action.run();
+        } catch (NotMatchDataException ex) {
+            //crawl丟出這例外,可以判定為更新結束
+        } catch (SQLException ex) {//若產生SQL例外,應判定為城市邏輯錯誤,所以丟出RuntimeException
+            throw new RuntimeException(ex);
+        }       
+    }
     /**
      * 自動更新到最新資料<br>
      * 使用此方法要自己確認資料表已經存在<br>
      */
     public void updateToLatest(String stockId) throws TwseDbSaveException {
         updateToLatest(stockId, LocalDate.now());
+    }
+    
+    interface UpdateAction{
+        void run() throws NotMatchDataException,SQLException;
     }
 }
