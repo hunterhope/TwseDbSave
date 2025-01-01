@@ -110,7 +110,7 @@ public class TwseDbSaveService {
      * 使用此方法要自己確認資料表已經存在<br>
      */
     public void updateHistory(String stockId) throws TwseDbSaveException {
-        try {
+        updateStructure(() -> {
             //查詢出最後一筆資料日期(原則上每次抓取資料都是一個月一個月的)
             LocalDate lastDate = queryLastDate(stockId);
             //無限迴圈上網抓取資料，直到沒有資料
@@ -119,11 +119,7 @@ public class TwseDbSaveService {
                 lastDate = lastDate.minusMonths(1);
                 waitClock.waitForSecurity(5, 11);
             } while (true);
-        } catch (NotMatchDataException ex) {
-            //crawl丟出這例外,可以判定為更新結束
-        } catch (SQLException ex) {//若產生SQL例外,應判定為城市邏輯錯誤,所以丟出RuntimeException
-            throw new RuntimeException(ex);
-        }
+        });
     }
 
     private LocalDate queryLastDate(String stockId) throws SQLException {
@@ -138,29 +134,26 @@ public class TwseDbSaveService {
      * 方便測試用,建議使用updateToLatest(String stockId) 使用此方法要自己確認資料表已經存在<br>
      */
     public void updateToLatest(String stockId, LocalDate nowDate) throws TwseDbSaveException {
-
-        try {
+        updateStructure(() -> {
             //取得資料庫內最新紀錄日期
             LocalDate dbLatestDate = queryLatestDate(stockId);
             //比對日期差異計算出要更新月份數
             long difMonths = ChronoUnit.MONTHS.between(YearMonth.from(dbLatestDate), YearMonth.from(nowDate)) + 1;//+1是因為dbLatestDate的月份也要抓取用來確保資料完整
             crawl(stockId, nowDate, (int) difMonths);
+        });
+
+    }
+
+    private void updateStructure(UpdateAction action) throws TwseDbSaveException {
+        try {
+            action.run();
         } catch (NotMatchDataException ex) {
             //crawl丟出這例外,可以判定為更新結束
         } catch (SQLException ex) {//若產生SQL例外,應判定為城市邏輯錯誤,所以丟出RuntimeException
             throw new RuntimeException(ex);
         }
     }
-    
-    private void updateStructure(UpdateAction action){
-         try {
-            action.run();
-        } catch (NotMatchDataException ex) {
-            //crawl丟出這例外,可以判定為更新結束
-        } catch (SQLException ex) {//若產生SQL例外,應判定為城市邏輯錯誤,所以丟出RuntimeException
-            throw new RuntimeException(ex);
-        }       
-    }
+
     /**
      * 自動更新到最新資料<br>
      * 使用此方法要自己確認資料表已經存在<br>
@@ -168,8 +161,9 @@ public class TwseDbSaveService {
     public void updateToLatest(String stockId) throws TwseDbSaveException {
         updateToLatest(stockId, LocalDate.now());
     }
-    
-    interface UpdateAction{
-        void run() throws NotMatchDataException,SQLException;
+
+    interface UpdateAction {
+
+        void run() throws NotMatchDataException, SQLException, TwseDbSaveException;
     }
 }

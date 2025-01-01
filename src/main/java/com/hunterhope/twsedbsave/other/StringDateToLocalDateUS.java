@@ -13,9 +13,13 @@ import java.time.chrono.MinguoDate;
  */
 public class StringDateToLocalDateUS {
     /**
+     * 若傳入null,則返回現在時間
      * @param sDate 格是要求yyy/mm/dd的字串
      */
     public LocalDate change(String sDate) {
+        if(sDate==null){
+            return LocalDate.now();
+        }
         String[] ymd = sDate.split("/");
         return LocalDate.from(MinguoDate.of(
                 Integer.parseInt(ymd[0]),
