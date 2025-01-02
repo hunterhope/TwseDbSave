@@ -168,7 +168,7 @@ public class TwseDbServiceTest {
         UrlAndQueryString noDataQueryString = new UrlAndQueryString("https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY");
         noDataQueryString.addParam("stockNo", stockId);
         noDataQueryString.addParam("response", "json");
-        noDataQueryString.addParam("date", "20231223");
+        noDataQueryString.addParam("date", "202312");
         TwseDbSaveService instance = new TwseDbSaveService(jrs, saveDao, waitClock);
         //模擬依賴行為
         mock_request_hasData();
@@ -226,7 +226,7 @@ public class TwseDbServiceTest {
         UrlAndQueryString noDataQueryString = new UrlAndQueryString("https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY");
         noDataQueryString.addParam("stockNo", stockId);
         noDataQueryString.addParam("response", "json");
-        noDataQueryString.addParam("date", "20240130");
+        noDataQueryString.addParam("date", "202401");
         mock_request_hasData();
         mock_request_noData(noDataQueryString);
         mock_db_latestDate("112/12/23");

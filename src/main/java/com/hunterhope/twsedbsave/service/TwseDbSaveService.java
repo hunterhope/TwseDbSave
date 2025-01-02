@@ -47,6 +47,7 @@ public class TwseDbSaveService {
     private final String TWSE_STOCK_PRICE_BASE_URL = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY";//?date=20240331&stockNo=2323&response=json
     private final WaitClock waitClock;
     private final StringDateToLocalDateUS sdToLdUS;
+    private final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMM");
 
     public TwseDbSaveService(JdbcTemplate jdbcTemplate) {
         this.jrs = new JsonRequestService();
@@ -107,7 +108,7 @@ public class TwseDbSaveService {
         int lastTimeLoop = months - 1;
         String tempDate;
         for (int i = 0; i < months; i++) {
-            tempDate=stateDate.minusMonths(i).format(DateTimeFormatter.BASIC_ISO_DATE);
+            tempDate=stateDate.minusMonths(i).format(dateFormat);
             qs.addParam("date", tempDate);
             try {
                 //上網爬資料
@@ -116,7 +117,6 @@ public class TwseDbSaveService {
                 data = omp.convertToStockEveryDayInfo();
                 //存入資料庫
                 saveDao.save(tableName, data);
-                notifyStep(new StepInfo(stockId,tempDate+"月份資料已存入資料庫"));
             } catch (NoInternetException | ServerMaintainException | DataClassFieldNameErrorException | ResponseEmptyException ex) {
                 throw new TwseDbSaveException(ex);//讓使用者只須要認識這個例外就好
             } catch (NotMatchDataException ex) {
@@ -128,7 +128,7 @@ public class TwseDbSaveService {
             }
             //每次上網爬資料間隔5~10秒
             if (i != lastTimeLoop) {//只抓取1個月則不用等，最後一次不用等
-                notifyStep(new StepInfo(stockId,"查詢進入安全等待時間5~10秒"));
+                notifyStep(new StepInfo(stockId,tempDate+"月份資料已存入資料庫\n"+"查詢進入安全等待時間5~10秒"));
                 waitClock.waitForSecurity(5, 11);
             }
         }
@@ -153,8 +153,8 @@ public class TwseDbSaveService {
             //無限迴圈上網抓取資料，直到沒有資料
             do {
                 crawl(stockId, lastDate, 1);
+                notifyStep(new StepInfo(stockId,lastDate.format(dateFormat)+"月份資料已存入資料庫,查詢進入安全等待時間5~10秒"));
                 lastDate = lastDate.minusMonths(1);
-                notifyStep(new StepInfo(stockId,"查詢進入安全等待時間5~10秒"));
                 waitClock.waitForSecurity(5, 11);
             } while (true);
         });
