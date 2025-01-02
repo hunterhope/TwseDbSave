@@ -73,6 +73,7 @@ public class TwseDbServiceTest {
         Mockito.verify(waitClock, Mockito.times(i)).waitForSecurity(Mockito.anyInt(), Mockito.anyInt());
     }
 
+    
     /**
      * 測試可假捕獲TwseDbSaveException例外
      */
