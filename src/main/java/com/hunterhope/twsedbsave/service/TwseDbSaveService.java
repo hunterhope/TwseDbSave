@@ -15,6 +15,7 @@ import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.dao.impl.SaveDaoImpl;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
 import static com.hunterhope.twsedbsave.entity.StockEveryDayInfo.combinTableName;
+import com.hunterhope.twsedbsave.other.DBManager;
 import com.hunterhope.twsedbsave.other.StringDateToLocalDateUS;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
@@ -49,9 +50,9 @@ public class TwseDbSaveService {
     private final StringDateToLocalDateUS sdToLdUS;
     private final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMM");
 
-    public TwseDbSaveService(JdbcTemplate jdbcTemplate) {
+    public TwseDbSaveService() {
         this.jrs = new JsonRequestService();
-        this.saveDao = new SaveDaoImpl(jdbcTemplate);
+        this.saveDao = new SaveDaoImpl(DBManager.getJdbcTemplate());
         this.waitClock = new WaitClock();
         this.sdToLdUS = new StringDateToLocalDateUS();
     }
