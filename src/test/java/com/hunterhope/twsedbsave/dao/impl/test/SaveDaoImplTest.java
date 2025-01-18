@@ -6,14 +6,13 @@ package com.hunterhope.twsedbsave.dao.impl.test;
 
 import com.hunterhope.twsedbsave.dao.impl.SaveDaoImpl;
 import static com.hunterhope.twsedbsave.dao.impl.test.other.UtilityForTest.SQLITE_DB_ROOT_PATH;
+import static com.hunterhope.twsedbsave.dao.impl.test.other.UtilityForTest.createAnyYearTestDataForOneMonth;
 import static com.hunterhope.twsedbsave.dao.impl.test.other.UtilityForTest.createJdbcTemplate;
+import static com.hunterhope.twsedbsave.dao.impl.test.other.UtilityForTest.createTestDataForOneMonth;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
 import com.hunterhope.twsedbsave.other.StringDateToLocalDateUS;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
-import java.sql.SQLSyntaxErrorException;
 import java.time.LocalDate;
 import java.time.chrono.MinguoDate;
 import java.time.format.DateTimeFormatter;
@@ -25,8 +24,6 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 /**
  *
@@ -234,38 +231,7 @@ public class SaveDaoImplTest {
             Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
         }
     }
-
-    private List<StockEveryDayInfo> createAnyYearTestDataForOneMonth() {
-        Random r = ThreadLocalRandom.current();
-        int yyy = r.nextInt(1, 1000);//3位數
-        int month = r.nextInt(1, 13);//1~12月
-        return createTestDataForOneMonth(yyy, month, r);
-    }
-
-    private List<StockEveryDayInfo> createTestDataForOneMonth(int yyy, int month, Random r) {
-        List<StockEveryDayInfo> data = new ArrayList<>();
-        MinguoDate md = MinguoDate.of(yyy, month, 1);
-        MinguoDate endMd = md.plus(1, ChronoUnit.MONTHS);
-        do {
-            data.add(createRandomStockEveryDayInfo(md, r));
-            md = md.plus(1, ChronoUnit.DAYS);
-        } while (md.isBefore(endMd));
-
-        return data;
-    }
-
-    private StockEveryDayInfo createRandomStockEveryDayInfo(MinguoDate md, Random r) {
-        StockEveryDayInfo stockEveryDayInfo = new StockEveryDayInfo();
-        stockEveryDayInfo.setDate(md.format(DateTimeFormatter.ofPattern("yyy/MM/dd")));
-        stockEveryDayInfo.setOpen(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
-        stockEveryDayInfo.setHight(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
-        stockEveryDayInfo.setLow(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
-        stockEveryDayInfo.setClose(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
-        stockEveryDayInfo.setVolume(String.format("%d", r.nextInt(1000, 9999)));
-        stockEveryDayInfo.setPriceDif(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
-        return stockEveryDayInfo;
-    }
-
+    
     private List<String> createOneMonthDate(String yymmdd) {
         LocalDate s = new StringDateToLocalDateUS().change(yymmdd);
         List<String> result = new ArrayList<>();

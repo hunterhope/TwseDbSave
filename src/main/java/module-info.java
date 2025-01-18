@@ -14,6 +14,7 @@ module TwseDB {
     exports com.hunterhope.twsedbsave.service.data to TwseDBTest;    
     exports com.hunterhope.twsedbsave.dao to TwseDBTest;
     exports com.hunterhope.twsedbsave.entity to TwseDBTest;
+    opens com.hunterhope.twsedbsave.entity to spring.beans,spring.core;
     exports com.hunterhope.twsedbsave.dao.impl to TwseDBTest;
     exports com.hunterhope.twsedbsave.other to TwseDBTest;
 }
