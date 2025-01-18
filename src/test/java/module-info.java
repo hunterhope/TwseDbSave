@@ -3,8 +3,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/module-info.java to edit this template
  */
 
-module TwseDbSaveTest {
-    requires TwseDbSave;
+module TwseDBTest {
+    requires TwseDB;
     requires JsonRequest;
     requires java.sql;
     requires spring.jdbc;

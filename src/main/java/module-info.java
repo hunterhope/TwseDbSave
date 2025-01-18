@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/module-info.java to edit this template
  */
 
-module TwseDbSave {
+module TwseDB {
     requires JsonRequest;
     requires com.google.gson;
     requires java.sql;
@@ -11,9 +11,9 @@ module TwseDbSave {
     requires spring.jdbc;
     exports com.hunterhope.twsedbsave.service;
     exports com.hunterhope.twsedbsave.service.exception;
-    exports com.hunterhope.twsedbsave.service.data to TwseDbSaveTest;    
-    exports com.hunterhope.twsedbsave.dao to TwseDbSaveTest;
-    exports com.hunterhope.twsedbsave.entity to TwseDbSaveTest;
-    exports com.hunterhope.twsedbsave.dao.impl to TwseDbSaveTest;
-    exports com.hunterhope.twsedbsave.other to TwseDbSaveTest;
+    exports com.hunterhope.twsedbsave.service.data to TwseDBTest;    
+    exports com.hunterhope.twsedbsave.dao to TwseDBTest;
+    exports com.hunterhope.twsedbsave.entity to TwseDBTest;
+    exports com.hunterhope.twsedbsave.dao.impl to TwseDBTest;
+    exports com.hunterhope.twsedbsave.other to TwseDBTest;
 }
