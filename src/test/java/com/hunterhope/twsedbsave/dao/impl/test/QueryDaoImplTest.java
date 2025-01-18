@@ -16,6 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  *
@@ -33,7 +34,7 @@ public class QueryDaoImplTest {
 
             QueryDaoImpl instance = new QueryDaoImpl(createJdbcTemplate(dbName));
             //跑起來
-            instance.selectAllDayInfo(tableName);
+            instance.selectAllDayInfo(tableName,DataClassTemp.class);
             //驗證，可以正確執行完畢
             fail("沒有丟出例外");
         } catch (SQLException ex) {
@@ -45,30 +46,39 @@ public class QueryDaoImplTest {
         }
     }
 
+
     @Test
-    public void test_select_all_has_data() throws Exception {
-        String dbName = "test_select_all_has_data.db";
+    public void test_StockEveryDayInfo_has_data_convert_to_any_data_class() throws Exception {
+        String dbName = "test_StockEveryDayInfo_convert_to_any_data_class.db";
         try {
-            System.out.print("query時，有資料:");
+            System.out.print("query時,有資料,可轉換成任意dataclass:");
             //準備物件
             String tableName = "stock_2323";
-            //預設DB資料
-            List<StockEveryDayInfo> data = createAnyYearTestDataForOneMonth();
-            SaveDaoImpl saveDaoImpl = new SaveDaoImpl(createJdbcTemplate(dbName));
-            //建立表格
-            saveDaoImpl.createTable(tableName);
-            //建立預設資料
-            saveDaoImpl.save(tableName, data);
+            JdbcTemplate jt = createDefData(dbName, tableName);
             //帶測物件
-            QueryDaoImpl instance = new QueryDaoImpl(createJdbcTemplate(dbName));
+            QueryDaoImpl instance = new QueryDaoImpl(jt);
             //跑起來
-            List<StockEveryDayInfo> result = instance.selectAllDayInfo(tableName);
-            //驗證
-            Assertions.assertFalse(result.isEmpty(),"資料庫應該要有資料");
+            List<DataClassTemp> result = instance.selectAllDayInfo(tableName, DataClassTemp.class);
+            //驗正
+            Assertions.assertFalse(result.isEmpty(), "傳換成dataclass失敗");
             System.out.println("成功");
+            System.out.println(result);
         } finally {
             //刪除資料庫
             Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
         }
+
+    }
+
+    private JdbcTemplate createDefData(String dbName, String tableName) throws Exception {
+        JdbcTemplate jt = createJdbcTemplate(dbName);
+        //預設DB資料
+        List<StockEveryDayInfo> data = createAnyYearTestDataForOneMonth();
+        SaveDaoImpl saveDaoImpl = new SaveDaoImpl(jt);
+        //建立表格
+        saveDaoImpl.createTable(tableName);
+        //建立預設資料
+        saveDaoImpl.save(tableName, data);
+        return jt;
     }
 }

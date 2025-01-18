@@ -27,11 +27,13 @@ public class TwseDbQueryService {
         this.queryDao = queryDao;
     }
     
-    public List<StockEveryDayInfo> selectAllDayInfo(String stockId) throws TwseDbQueryException{
+    public <T> List<T> selectAllDayInfo(String stockId,Class<T> dataClass) throws TwseDbQueryException{
         try{
-            return queryDao.selectAllDayInfo(StockEveryDayInfo.combinTableName(stockId));
+            return queryDao.selectAllDayInfo(StockEveryDayInfo.combinTableName(stockId),dataClass);
         }catch(SQLException ex){
             throw new TwseDbQueryException("表格不存在");
+        }catch(Exception e){
+            throw new TwseDbQueryException(e);
         }
     }
     

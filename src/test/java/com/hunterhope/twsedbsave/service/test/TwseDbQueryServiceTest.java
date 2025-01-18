@@ -5,6 +5,7 @@
 package com.hunterhope.twsedbsave.service.test;
 
 import com.hunterhope.twsedbsave.dao.QueryDao;
+import com.hunterhope.twsedbsave.dao.impl.test.DataClassTemp;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
 import com.hunterhope.twsedbsave.service.TwseDbQueryService;
 import com.hunterhope.twsedbsave.service.exception.TwseDbQueryException;
@@ -26,12 +27,12 @@ public class TwseDbQueryServiceTest {
         
         //模擬依賴
         QueryDao dao = Mockito.mock(QueryDao.class);
-        Mockito.when(dao.selectAllDayInfo(Mockito.any())).thenThrow(SQLException.class);
+        Mockito.when(dao.selectAllDayInfo(Mockito.any(),Mockito.any())).thenThrow(SQLException.class);
         //測試物件
         TwseDbQueryService tdqs = new TwseDbQueryService(dao);
         try {
             //跑起來
-            List<StockEveryDayInfo> result = tdqs.selectAllDayInfo("2323");
+            List<DataClassTemp> result = tdqs.selectAllDayInfo("2323",DataClassTemp.class);
             //驗證
             fail("沒有例外丟出");
         } catch (TwseDbQueryException ex) {

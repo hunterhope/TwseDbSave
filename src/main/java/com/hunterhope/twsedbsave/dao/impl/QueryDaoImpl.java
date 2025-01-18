@@ -24,11 +24,11 @@ public class QueryDaoImpl implements QueryDao {
     }
 
     @Override
-    public List<StockEveryDayInfo> selectAllDayInfo(String tableName) throws SQLException {
+    public <T> List<T> selectAllDayInfo(String tableName, Class<T> dataClass) throws SQLException {
         String sql = "SELECT * FROM %s ORDER BY date;";
         try {
             return jdbcClient.sql(String.format(sql, tableName))
-                    .query(StockEveryDayInfo.class).list();
+                    .query(dataClass).list();
         } catch (RuntimeException ex) {
             throw new SQLException(ex);
         }

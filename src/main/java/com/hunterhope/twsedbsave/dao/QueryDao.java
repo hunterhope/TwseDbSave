@@ -14,6 +14,6 @@ import java.util.List;
  */
 public interface QueryDao {
 
-    public List<StockEveryDayInfo> selectAllDayInfo(String combinTableName) throws SQLException;
+    public <T> List<T> selectAllDayInfo(String combinTableName,Class<T> dataClass) throws SQLException;
     
 }
