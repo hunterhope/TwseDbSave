@@ -5,7 +5,9 @@
 package com.hunterhope.twsedbsave.service;
 
 import com.hunterhope.twsedbsave.dao.QueryDao;
+import com.hunterhope.twsedbsave.dao.impl.QueryDaoImpl;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
+import com.hunterhope.twsedbsave.other.DBManager;
 import com.hunterhope.twsedbsave.service.exception.TwseDbQueryException;
 import java.sql.SQLException;
 import java.util.List;
@@ -15,9 +17,10 @@ import java.util.List;
  * @author user
  */
 public class TwseDbQueryService {
-    private QueryDao queryDao;
+    private final QueryDao queryDao;
 
     public TwseDbQueryService() {
+        queryDao=new QueryDaoImpl(DBManager.getJdbcTemplate());
     }
 
     public TwseDbQueryService(QueryDao queryDao) {
