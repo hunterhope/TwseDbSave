@@ -7,6 +7,7 @@ package com.hunterhope.twsedbsave.service;
 import com.hunterhope.twsedbsave.dao.QueryDao;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
 import com.hunterhope.twsedbsave.service.exception.TwseDbQueryException;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -15,9 +16,20 @@ import java.util.List;
  */
 public class TwseDbQueryService {
     private QueryDao queryDao;
+
+    public TwseDbQueryService() {
+    }
+
+    public TwseDbQueryService(QueryDao queryDao) {
+        this.queryDao = queryDao;
+    }
     
-    public List<StockEveryDayInfo> selectAllDayInfo(String string) throws TwseDbQueryException{
-        throw new TwseDbQueryException("表格不存在");
+    public List<StockEveryDayInfo> selectAllDayInfo(String stockId) throws TwseDbQueryException{
+        try{
+            return queryDao.selectAllDayInfo(StockEveryDayInfo.combinTableName(stockId));
+        }catch(SQLException ex){
+            throw new TwseDbQueryException("表格不存在");
+        }
     }
     
 }

@@ -5,6 +5,8 @@
 package com.hunterhope.twsedbsave.dao.impl.test;
 
 import com.hunterhope.twsedbsave.dao.impl.SaveDaoImpl;
+import static com.hunterhope.twsedbsave.dao.impl.test.other.UtilityForTest.SQLITE_DB_ROOT_PATH;
+import static com.hunterhope.twsedbsave.dao.impl.test.other.UtilityForTest.createJdbcTemplate;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
 import com.hunterhope.twsedbsave.other.StringDateToLocalDateUS;
 import java.nio.file.Files;
@@ -32,7 +34,6 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
  */
 public class SaveDaoImplTest {
 
-    private final Path SQLITE_DB_ROOT_PATH = Path.of("C:/Users/Public");
 
     public SaveDaoImplTest() {
     }
@@ -232,12 +233,6 @@ public class SaveDaoImplTest {
             //刪除資料庫
             Files.deleteIfExists(SQLITE_DB_ROOT_PATH.resolve(dbName));
         }
-    }
-
-    private JdbcTemplate createJdbcTemplate(String dbName) {
-        DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setUrl("jdbc:sqlite:" + SQLITE_DB_ROOT_PATH.resolve(dbName));//建議資料庫用在Public大家都可以存取的地方
-        return new JdbcTemplate(dataSource);
     }
 
     private List<StockEveryDayInfo> createAnyYearTestDataForOneMonth() {
