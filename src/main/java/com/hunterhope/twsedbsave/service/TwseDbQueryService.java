@@ -31,7 +31,7 @@ public class TwseDbQueryService {
         try{
             return queryDao.selectAllDayInfo(StockEveryDayInfo.combinTableName(stockId),dataClass);
         }catch(SQLException ex){
-            throw new TwseDbQueryException("表格不存在");
+            throw new TwseDbQueryException(ex);
         }catch(Exception e){
             throw new TwseDbQueryException(e);
         }
