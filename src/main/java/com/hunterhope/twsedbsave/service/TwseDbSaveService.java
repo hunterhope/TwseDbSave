@@ -108,7 +108,9 @@ public class TwseDbSaveService {
         UrlAndQueryString qs = createUrlAndQueryString(stockId);
         int lastTimeLoop = months - 1;
         String tempDate;
+        boolean hasSaveDb=false;
         for (int i = 0; i < months; i++) {
+            hasSaveDb=false;
             tempDate=stateDate.minusMonths(i).format(dateFormat);
             qs.addParam("date", tempDate);
             try {
@@ -118,6 +120,7 @@ public class TwseDbSaveService {
                 data = omp.convertToStockEveryDayInfo();
                 //存入資料庫
                 saveDao.save(tableName, data);
+                hasSaveDb=true;
             } catch (NoInternetException | ServerMaintainException | DataClassFieldNameErrorException | ResponseEmptyException ex) {
                 throw new TwseDbSaveException(ex);//讓使用者只須要認識這個例外就好
             } catch (NotMatchDataException ex) {
@@ -129,7 +132,11 @@ public class TwseDbSaveService {
             }
             //每次上網爬資料間隔5~10秒
             if (i != lastTimeLoop) {//只抓取1個月則不用等，最後一次不用等
-                notifyStep(new StepInfo(stockId,tempDate+"月份資料已存入資料庫\n"+"查詢進入安全等待時間5~10秒"));
+                if(hasSaveDb){
+                    notifyStep(new StepInfo(stockId,tempDate+"月份資料已存入資料庫,"+"查詢進入安全等待時間5~10秒"));
+                }else{
+                    notifyStep(new StepInfo(stockId,tempDate+"月份無資料,"+"查詢進入安全等待時間5~10秒"));
+                }
                 waitClock.waitForSecurity(5, 11);
             }
         }
