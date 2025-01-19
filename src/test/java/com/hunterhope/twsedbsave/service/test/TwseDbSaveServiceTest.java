@@ -24,7 +24,7 @@ import org.mockito.Mockito;
  *
  * @author user
  */
-public class TwseDbServiceTest {
+public class TwseDbSaveServiceTest {
 
     //準備假物件
     private final JsonRequestService jrs = Mockito.mock(JsonRequestService.class);
@@ -33,7 +33,7 @@ public class TwseDbServiceTest {
     private final OneMonthPrice hasData;
     private final OneMonthPrice noData;
 
-    public TwseDbServiceTest() {
+    public TwseDbSaveServiceTest() {
         hasData = new OneMonthPrice();
         hasData.setStat("ok");
         hasData.setData(List.of());
