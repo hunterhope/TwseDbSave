@@ -18,5 +18,5 @@ module TwseDB {
     exports com.hunterhope.twsedbsave.other to TwseDBTest;
     
     opens com.hunterhope.twsedbsave.entity to spring.beans,spring.core;
-    opens com.hunterhope.twsedbsave.service.data to com.google.gson;
+    opens com.hunterhope.twsedbsave.service.data;
 }
