@@ -142,7 +142,7 @@ public class TwseDbSaveService {
         }
     }
 
-    private UrlAndQueryString createUrlAndQueryString(String stockId) {
+    public final UrlAndQueryString createUrlAndQueryString(String stockId) {
         //建立UrlAndQueryString
         UrlAndQueryString qs = new UrlAndQueryString(TWSE_STOCK_PRICE_BASE_URL);
         qs.addParam("stockNo", stockId);
