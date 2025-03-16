@@ -15,7 +15,13 @@ import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
 import com.hunterhope.twsedbsave.service.exception.TwseDbSaveException;
 import java.time.LocalDate;
+import java.time.Month;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import javax.naming.spi.DirStateFactory;
+import org.junit.jupiter.api.Assertions;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -36,7 +42,15 @@ public class TwseDbSaveServiceTest {
     public TwseDbSaveServiceTest() {
         hasData = new OneMonthPrice();
         hasData.setStat("ok");
-        hasData.setData(List.of());
+        hasData.setData(List.of(List.of("114/03/03",
+                "73,279,419",
+                "74,076,141,634",
+                "1,000.00",
+                "1,020.00",
+                "1,000.00",
+                "1,020.00",
+                "-20.00",
+                "208,673")));
         noData = new OneMonthPrice();
         noData.setStat("沒有資料");
     }
@@ -73,12 +87,11 @@ public class TwseDbSaveServiceTest {
         Mockito.verify(waitClock, Mockito.times(i)).waitForSecurity(Mockito.anyInt(), Mockito.anyInt());
     }
 
-    
     /**
      * 測試可假捕獲TwseDbSaveException例外
      */
     @Test
-    public void teseUpdateHistory_throw_TwseDbSaveException() throws Exception{
+    public void teseUpdateHistory_throw_TwseDbSaveException() throws Exception {
         System.out.print("測試可假捕獲TwseDbSaveException例外:");
         //準備物件
         String stockId = "2323";
@@ -236,5 +249,64 @@ public class TwseDbSaveServiceTest {
         verifyDaoSave(1);
         verifyWaitClockAction(1);
         System.out.println("成功");
+    }
+
+    @Test
+    public void testCrawlLatestNoSave_2330_one_month_has() throws Exception {
+        System.out.print("測試上網抓取最進2個月是否有資料,第一個月有資料:");
+        //準備物件
+        String stockId = "2330";
+        TwseDbSaveService instance = new TwseDbSaveService(jrs, saveDao, waitClock);
+        //模擬依賴行為
+        mock_request_hasData();
+        //跑起來
+        Map<String, String> result = instance.crawlLatestNoSave(stockId);
+        //驗證
+        verifyDaoSave(0);
+        verifyWaitClockAction(0);
+        Assertions.assertFalse(result.isEmpty(), "第一個月應該要有資料");
+        System.out.println("成功");
+    }
+
+    @Test
+    public void testCrawlLatestNoSave_2330_second_month_has() throws Exception {
+        System.out.print("測試上網抓取最進2個月是否有資料,第二個月才有資料:");
+        //準備物件
+        String stockId = "2330";
+        TwseDbSaveService instance = new TwseDbSaveService(jrs, saveDao, waitClock);
+        //模擬依賴行為
+        mock_request_hasData();
+        UrlAndQueryString noDataQueryString = new UrlAndQueryString("https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY");
+        noDataQueryString.addParam("stockNo", stockId);
+        noDataQueryString.addParam("response", "json");
+        noDataQueryString.addParam("date", YearMonth.now().format(DateTimeFormatter.ofPattern("yyyyMM")));
+        mock_request_noData(noDataQueryString);
+        //跑起來
+        Map<String, String> result = instance.crawlLatestNoSave(stockId);
+        //驗證
+        verifyDaoSave(0);
+        verifyWaitClockAction(1);
+        Assertions.assertFalse(result.isEmpty(), "應該要有資料");
+        System.out.println("成功");
+    }
+
+    @Test
+    public void testCrawlLatestNoSave_2330_no_data() throws Exception {
+        System.out.print("測試上網抓取最進2個月是否有資料,都沒資料:");
+        //準備物件
+        String stockId = "2330";
+        TwseDbSaveService instance = new TwseDbSaveService(jrs, saveDao, waitClock);
+        //模擬依賴行為
+        mock_request_noData(null);
+        //跑起來
+        try {
+            instance.crawlLatestNoSave(stockId);
+            Assertions.fail("沒有拋出例外");
+        } catch (NotMatchDataException ex) {
+            //驗證
+            verifyDaoSave(0);
+            verifyWaitClockAction(1);
+            System.out.println("成功");
+        }
     }
 }

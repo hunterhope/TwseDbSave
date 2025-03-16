@@ -27,7 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.jdbc.core.JdbcTemplate;
+import java.util.Map;
 
 /**
  * 此服務類任務是抓取網路TWSE網站上市股票交易資訊，並存入資料庫內<br>
@@ -37,12 +37,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 public class TwseDbSaveService {
 
-    public interface StepListener{
+    public interface StepListener {
+
         void onStep(StepInfo stepInfo);
     }
-    
-    private final List<StepListener> listeners=new ArrayList<>();
-    
+
+    private final List<StepListener> listeners = new ArrayList<>();
+
     private final JsonRequestService jrs;
     private final SaveDao saveDao;
     private final String TWSE_STOCK_PRICE_BASE_URL = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY";//?date=20240331&stockNo=2323&response=json
@@ -67,30 +68,35 @@ public class TwseDbSaveService {
     /**
      * 加入監聽器.由於內部會有5~10秒延遲,可收到目前更新到哪裡.<br>
      * 當你不使用時記得要移除.
+     * @param listener
      */
-    public void addListener(StepListener listener){
-        synchronized(listeners){
+    public void addListener(StepListener listener) {
+        synchronized (listeners) {
             listeners.add(listener);
         }
     }
+
     /**
      * 移除監聽器.當你不使用時記得要移除,不然有可能造成記憶體洩漏(該回收沒有被回收).
+     * @param listener
      */
-    public void removeListener(StepListener listener){
-        synchronized(listeners){
+    public void removeListener(StepListener listener) {
+        synchronized (listeners) {
             listeners.remove(listener);
         }
     }
+
     /**
      * 由於在多執行續下,所以任何通知要靠此方法才安全
      */
-    private void notifyStep(StepInfo stepInfo){
-        synchronized(listeners){
-            for(StepListener listener:listeners){
+    private void notifyStep(StepInfo stepInfo) {
+        synchronized (listeners) {
+            for (StepListener listener : listeners) {
                 listener.onStep(stepInfo);
             }
         }
     }
+
     /**
      * 上網爬指定股票指定開始日期，爬指定幾個月份。<br>
      * 此方法會確保資料表存在，
@@ -103,24 +109,53 @@ public class TwseDbSaveService {
      * 查詢回來如果沒有符合的資料，有可能是此股票代號錯誤，或沒有該股票本月的交易紀錄，需要使用者自己處理
      */
     public void crawl(String stockId, LocalDate stateDate, int months) throws TwseDbSaveException, NotMatchDataException {
+        crawlHelper(stockId, stateDate, months, true);
+    }
+
+    /**
+     * 此方法會上網抓取現在日期最近2個月網路資料.有可能會沒有資料.
+     *
+     * @param stockId
+     * @return 回傳 日期date,量volume,開open,高hight,低low,收close,價差priceDif 資訊
+     * @throws TwseDbSaveException
+     * @throws NotMatchDataException
+     */
+    public Map<String, String> crawlLatestNoSave(String stockId) throws TwseDbSaveException, NotMatchDataException {
+        List<StockEveryDayInfo> data = crawlHelper(stockId,LocalDate.now(),2,false);
+        
+        StockEveryDayInfo latestInfo = data.get(data.size() - 1);
+        return Map.of("date", latestInfo.getDate(),
+                "volume", latestInfo.getVolume(),
+                "open", latestInfo.getOpen(),
+                "hight", latestInfo.getHight(),
+                "low", latestInfo.getLow(),
+                "close", latestInfo.getClose(),
+                "priceDif", latestInfo.getPriceDif()
+        );
+    }
+
+    private List<StockEveryDayInfo> crawlHelper(String stockId, LocalDate startDate, int months, boolean saveDb) throws TwseDbSaveException, NotMatchDataException {
         String tableName = combinTableName(stockId);
-        List<StockEveryDayInfo> data;
+        List<StockEveryDayInfo> data=List.of();
         UrlAndQueryString qs = createUrlAndQueryString(stockId);
         int lastTimeLoop = months - 1;
         String tempDate;
-        boolean hasSaveDb=false;
+        boolean hasSaveDb;
         for (int i = 0; i < months; i++) {
-            hasSaveDb=false;
-            tempDate=stateDate.minusMonths(i).format(dateFormat);
+            hasSaveDb = false;
+            tempDate = startDate.minusMonths(i).format(dateFormat);
             qs.addParam("date", tempDate);
             try {
                 //上網爬資料
                 OneMonthPrice omp = jrs.getData(qs, OneMonthPrice.class);
                 //轉換成資料庫表格形式
                 data = omp.convertToStockEveryDayInfo();
-                //存入資料庫
-                saveDao.save(tableName, data);
-                hasSaveDb=true;
+                if (saveDb) {//存入資料庫
+                    saveDao.save(tableName, data);
+                    hasSaveDb = true;
+                } else if(!data.isEmpty()){
+                    break;
+                }
             } catch (NoInternetException | ServerMaintainException | DataClassFieldNameErrorException | ResponseEmptyException ex) {
                 throw new TwseDbSaveException(ex);//讓使用者只須要認識這個例外就好
             } catch (NotMatchDataException ex) {
@@ -132,17 +167,18 @@ public class TwseDbSaveService {
             }
             //每次上網爬資料間隔5~10秒
             if (i != lastTimeLoop) {//只抓取1個月則不用等，最後一次不用等
-                if(hasSaveDb){
-                    notifyStep(new StepInfo(stockId,tempDate+"月份資料已存入資料庫,"+"查詢進入安全等待時間5~10秒"));
-                }else{
-                    notifyStep(new StepInfo(stockId,tempDate+"月份無資料,"+"查詢進入安全等待時間5~10秒"));
+                if (hasSaveDb) {
+                    notifyStep(new StepInfo(stockId, tempDate + "月份資料已存入資料庫," + "查詢進入安全等待時間5~10秒"));
+                } else {
+                    notifyStep(new StepInfo(stockId, tempDate + "月份無資料," + "查詢進入安全等待時間5~10秒"));
                 }
                 waitClock.waitForSecurity(5, 11);
             }
         }
+        return data;
     }
 
-    public final UrlAndQueryString createUrlAndQueryString(String stockId) {
+    private UrlAndQueryString createUrlAndQueryString(String stockId) {
         //建立UrlAndQueryString
         UrlAndQueryString qs = new UrlAndQueryString(TWSE_STOCK_PRICE_BASE_URL);
         qs.addParam("stockNo", stockId);
@@ -153,6 +189,8 @@ public class TwseDbSaveService {
     /**
      * 自動更新歷史資料，到抓不到資料<br>
      * 使用此方法要自己確認資料表已經存在<br>
+     * @param stockId
+     * @throws TwseDbSaveException
      */
     public void updateHistory(String stockId) throws TwseDbSaveException {
         updateStructure(() -> {
@@ -161,7 +199,7 @@ public class TwseDbSaveService {
             //無限迴圈上網抓取資料，直到沒有資料
             do {
                 crawl(stockId, lastDate, 1);
-                notifyStep(new StepInfo(stockId,lastDate.format(dateFormat)+"月份資料已存入資料庫,查詢進入安全等待時間5~10秒"));
+                notifyStep(new StepInfo(stockId, lastDate.format(dateFormat) + "月份資料已存入資料庫,查詢進入安全等待時間5~10秒"));
                 lastDate = lastDate.minusMonths(1);
                 waitClock.waitForSecurity(5, 11);
             } while (true);
@@ -178,6 +216,9 @@ public class TwseDbSaveService {
 
     /**
      * 方便測試用,建議使用updateToLatest(String stockId) 使用此方法要自己確認資料表已經存在<br>
+     * @param stockId
+     * @param nowDate
+     * @throws TwseDbSaveException
      */
     public void updateToLatest(String stockId, LocalDate nowDate) throws TwseDbSaveException {
         updateStructure(() -> {
@@ -203,6 +244,8 @@ public class TwseDbSaveService {
     /**
      * 自動更新到最新資料<br>
      * 使用此方法要自己確認資料表已經存在<br>
+     * @param stockId
+     * @throws TwseDbSaveException
      */
     public void updateToLatest(String stockId) throws TwseDbSaveException {
         updateToLatest(stockId, LocalDate.now());
@@ -212,5 +255,5 @@ public class TwseDbSaveService {
 
         void run() throws NotMatchDataException, SQLException, TwseDbSaveException;
     }
-    
+
 }
