@@ -16,7 +16,7 @@ import com.hunterhope.twsedbsave.dao.impl.SaveDaoImpl;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
 import static com.hunterhope.twsedbsave.entity.StockEveryDayInfo.combinTableName;
 import com.hunterhope.twsedbsave.other.DBManager;
-import com.hunterhope.twsedbsave.other.StringDateToLocalDateUS;
+import com.hunterhope.twsedbsave.other.StringDateMinguoDateToLocalDateUS;
 import com.hunterhope.twsedbsave.service.data.OneMonthPrice;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
 import com.hunterhope.twsedbsave.service.exception.TwseDbSaveException;
@@ -48,21 +48,18 @@ public class TwseDbSaveService {
     private final SaveDao saveDao;
     private final String TWSE_STOCK_PRICE_BASE_URL = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY";//?date=20240331&stockNo=2323&response=json
     private final WaitClock waitClock;
-    private final StringDateToLocalDateUS sdToLdUS;
     private final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yMMdd");
 
     public TwseDbSaveService() {
         this.jrs = new JsonRequestService();
         this.saveDao = new SaveDaoImpl(DBManager.getJdbcTemplate());
         this.waitClock = new WaitClock();
-        this.sdToLdUS = new StringDateToLocalDateUS();
     }
 
     public TwseDbSaveService(JsonRequestService jrs, SaveDao saveDao, WaitClock waitClock1) {
         this.jrs = jrs;
         this.saveDao = saveDao;
         this.waitClock = waitClock1;
-        this.sdToLdUS = new StringDateToLocalDateUS();
     }
 
     /**
@@ -211,11 +208,11 @@ public class TwseDbSaveService {
     }
 
     private LocalDate queryLastDate(String stockId) throws SQLException {
-        return sdToLdUS.change(saveDao.queryLastDate(combinTableName(stockId)));
+        return LocalDate.parse(saveDao.queryLastDate(combinTableName(stockId)));
     }
 
     private LocalDate queryLatestDate(String stockId) throws SQLException {
-        return sdToLdUS.change(saveDao.queryLatestDate(combinTableName(stockId)));
+        return LocalDate.parse(saveDao.queryLatestDate(combinTableName(stockId)));
     }
 
     /**

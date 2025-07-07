@@ -10,7 +10,7 @@ import static com.hunterhope.twsedbsave.dao.impl.test.other.UtilityForTest.creat
 import static com.hunterhope.twsedbsave.dao.impl.test.other.UtilityForTest.createJdbcTemplate;
 import static com.hunterhope.twsedbsave.dao.impl.test.other.UtilityForTest.createTestDataForOneMonth;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
-import com.hunterhope.twsedbsave.other.StringDateToLocalDateUS;
+import com.hunterhope.twsedbsave.other.StringDateMinguoDateToLocalDateUS;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -233,7 +233,7 @@ public class SaveDaoImplTest {
     }
     
     private List<String> createOneMonthDate(String yymmdd) {
-        LocalDate s = new StringDateToLocalDateUS().change(yymmdd);
+        LocalDate s = new StringDateMinguoDateToLocalDateUS().change(yymmdd);
         List<String> result = new ArrayList<>();
         LocalDate e = s.plusMonths(1);
         do {

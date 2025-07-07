@@ -97,6 +97,7 @@ public class TwseDbSaveServiceTest {
         String stockId = "2323";
         TwseDbSaveService tds = new TwseDbSaveService(jrs, saveDao, waitClock);
         //模擬依賴行為
+        Mockito.when(saveDao.queryLastDate(Mockito.any())).thenReturn("2025-07-07");
         Mockito.when(jrs.getData(Mockito.any(), Mockito.eq(OneMonthPrice.class))).thenThrow(ServerMaintainException.class);
         try {
             //跑起來
@@ -186,7 +187,7 @@ public class TwseDbSaveServiceTest {
         //模擬依賴行為
         mock_request_hasData();
         mock_request_noData(noDataQueryString);
-        Mockito.when(saveDao.queryLastDate(Mockito.any())).thenReturn("113-12-23");
+        Mockito.when(saveDao.queryLastDate(Mockito.any())).thenReturn("2024-12-23");
         //跑起來
         instance.updateHistory(stockId);
         //驗證
@@ -203,7 +204,7 @@ public class TwseDbSaveServiceTest {
         TwseDbSaveService instance = new TwseDbSaveService(jrs, saveDao, waitClock);
         //模擬依賴行為
         mock_request_hasData();
-        mock_db_latestDate("112-12-23");
+        mock_db_latestDate("2023-12-23");
         //跑起來
         instance.updateToLatest(stockId, LocalDate.of(2023, 12, 30));
         //驗證
@@ -220,7 +221,7 @@ public class TwseDbSaveServiceTest {
         TwseDbSaveService instance = new TwseDbSaveService(jrs, saveDao, waitClock);
         //模擬依賴行為
         mock_request_hasData();
-        mock_db_latestDate("112-12-23");
+        mock_db_latestDate("2023-12-23");
         //跑起來
         instance.updateToLatest(stockId, LocalDate.of(2024, 12, 30));
         //驗證
@@ -242,7 +243,7 @@ public class TwseDbSaveServiceTest {
         noDataQueryString.addParam("date", "20240130");
         mock_request_hasData();
         mock_request_noData(noDataQueryString);
-        mock_db_latestDate("112-12-23");
+        mock_db_latestDate("2023-12-23");
         //跑起來
         instance.updateToLatest(stockId, LocalDate.of(2024, 1, 30));
         //驗證

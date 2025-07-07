@@ -6,7 +6,7 @@ package com.hunterhope.twsedbsave.dao.impl;
 
 import com.hunterhope.twsedbsave.dao.SaveDao;
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
-import com.hunterhope.twsedbsave.other.StringDateToLocalDateUS;
+import com.hunterhope.twsedbsave.other.StringDateMinguoDateToLocalDateUS;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.chrono.MinguoDate;
@@ -68,7 +68,7 @@ public class SaveDaoImpl implements SaveDao {
 
     private void removeDuplicateData(String tableName, List<StockEveryDayInfo> data) throws SQLException {
         String saveYYMMDD = data.get(0).getDate();
-        MinguoDate md = MinguoDate.from(new StringDateToLocalDateUS().change(saveYYMMDD).withDayOfMonth(1));
+        MinguoDate md = MinguoDate.from(new StringDateMinguoDateToLocalDateUS().change(saveYYMMDD).withDayOfMonth(1));
         //查詢資料庫此月份資料出來
         List<String> dbDates = queryDates(tableName, md.format(DateTimeFormatter.ofPattern("y-MM-dd")));
         //排除重複資料

@@ -11,7 +11,7 @@ import java.time.chrono.MinguoDate;
  *
  * @author user
  */
-public class StringDateToLocalDateUS {
+public class StringDateMinguoDateToLocalDateUS {
     /**
      * 若傳入null,則返回現在時間
      * @param sDate 格是要求yyy/mm/dd的字串

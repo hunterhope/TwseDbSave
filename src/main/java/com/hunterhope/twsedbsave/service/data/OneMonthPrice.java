@@ -5,6 +5,7 @@
 package com.hunterhope.twsedbsave.service.data;
 
 import com.hunterhope.twsedbsave.entity.StockEveryDayInfo;
+import com.hunterhope.twsedbsave.other.StringDateMinguoDateToLocalDateUS;
 import com.hunterhope.twsedbsave.service.exception.NotMatchDataException;
 import java.util.List;
 import java.util.Objects;
@@ -110,10 +111,11 @@ public class OneMonthPrice {
     }
 
     public List<StockEveryDayInfo> convertToStockEveryDayInfo() throws NotMatchDataException {
+        StringDateMinguoDateToLocalDateUS stringDateToLocalDateUS = new StringDateMinguoDateToLocalDateUS();
         if (hasData()) {
             return data.stream().map(item -> {
                 StockEveryDayInfo obj = new StockEveryDayInfo();
-                obj.setDate(item.get(0).trim().replaceAll("/", "-"));
+                obj.setDate(stringDateToLocalDateUS.change(item.get(0).trim().replaceAll("/", "-")).toString());
                 obj.setVolume(item.get(1));
                 obj.setOpen(item.get(3));
                 obj.setHight(item.get(4));
