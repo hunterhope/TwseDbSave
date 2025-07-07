@@ -20,7 +20,7 @@ public class StringDateToLocalDateUS {
         if(sDate==null){
             return LocalDate.now();
         }
-        String[] ymd = sDate.split("/");
+        String[] ymd = sDate.trim().split("/");
         return LocalDate.from(MinguoDate.of(
                 Integer.parseInt(ymd[0]),
                 Integer.parseInt(ymd[1]),
