@@ -118,7 +118,7 @@ public class TwseDbSaveService {
      * 此方法會上網抓取現在日期最近2個月網路資料.有可能會沒有資料.
      *
      * @param stockId
-     * @return 回傳 日期date,量volume,開open,高hight,低low,收close,價差priceDif 資訊
+     * @return 回傳 日期date,量volume,開open,高high,低low,收close,價差priceDif 資訊
      * @throws TwseDbSaveException
      * @throws NotMatchDataException
      */
@@ -129,7 +129,7 @@ public class TwseDbSaveService {
         return Map.of("date", latestInfo.getDate(),
                 "volume", latestInfo.getVolume(),
                 "open", latestInfo.getOpen(),
-                "hight", latestInfo.getHight(),
+                "high", latestInfo.getHigh(),
                 "low", latestInfo.getLow(),
                 "close", latestInfo.getClose(),
                 "priceDif", latestInfo.getPriceDif()

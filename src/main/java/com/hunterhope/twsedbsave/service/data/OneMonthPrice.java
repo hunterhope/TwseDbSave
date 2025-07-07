@@ -111,15 +111,15 @@ public class OneMonthPrice {
 
     public List<StockEveryDayInfo> convertToStockEveryDayInfo() throws NotMatchDataException {
         if (hasData()) {
-            return data.stream().map(items -> {
+            return data.stream().map(item -> {
                 StockEveryDayInfo obj = new StockEveryDayInfo();
-                obj.setDate(items.get(0));
-                obj.setVolume(items.get(1));
-                obj.setOpen(items.get(3));
-                obj.setHight(items.get(4));
-                obj.setLow(items.get(5));
-                obj.setClose(items.get(6));
-                obj.setPriceDif(items.get(7));
+                obj.setDate(item.get(0).trim().replaceAll("/", "-"));
+                obj.setVolume(item.get(1));
+                obj.setOpen(item.get(3));
+                obj.setHight(item.get(4));
+                obj.setLow(item.get(5));
+                obj.setClose(item.get(6));
+                obj.setPriceDif(item.get(7));
                 return obj;
             }).collect(Collectors.toList());
         }

@@ -17,7 +17,7 @@ public class StockEveryDayInfo {
     private String date;
     private String volume;
     private String open;
-    private String hight;
+    private String high;
     private String low;
     private String close;
     private String priceDif;
@@ -54,12 +54,12 @@ public class StockEveryDayInfo {
         this.open = open;
     }
 
-    public String getHight() {
-        return hight;
+    public String getHigh() {
+        return high;
     }
 
-    public void setHight(String hight) {
-        this.hight = hight;
+    public void setHight(String high) {
+        this.high = high;
     }
 
     public String getLow() {
@@ -102,7 +102,7 @@ public class StockEveryDayInfo {
 
     @Override
     public String toString() {
-        return "StockEveryDayInfo{" + "date=" + date + ", volume=" + volume + ", open=" + open + ", hight=" + hight + ", low=" + low + ", close=" + close + ", priceDif=" + priceDif + '}';
+        return "StockEveryDayInfo{" + "date=" + date + ", volume=" + volume + ", open=" + open + ", high=" + high + ", low=" + low + ", close=" + close + ", priceDif=" + priceDif + '}';
     }
 
     public static String combinTableName(String stockId) {

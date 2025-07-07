@@ -162,7 +162,7 @@ public class SaveDaoImplTest {
             List<StockEveryDayInfo> data2 = createTestDataForOneMonth(112, 12, ThreadLocalRandom.current());
             instance.save(tableName, data1);
             instance.save(tableName, data2);
-            String expResult = "112/12/01";
+            String expResult = "112-12-01";
             //跑起來
             String result = instance.queryLastDate(tableName);
             //驗證
@@ -191,7 +191,7 @@ public class SaveDaoImplTest {
             List<StockEveryDayInfo> data2 = createTestDataForOneMonth(112, 12, ThreadLocalRandom.current());
             instance.save(tableName, data1);
             instance.save(tableName, data2);
-            String expResult = "113/12/31";
+            String expResult = "113-12-31";
             //跑起來
             String result = instance.queryLatestDate(tableName);
             //驗證
@@ -213,7 +213,7 @@ public class SaveDaoImplTest {
             System.out.print("測試取得指定某年月的資料:");
             //準備物件
             String tableName = "stock_2323";
-            String yymmdd = "113/12/01";
+            String yymmdd = "113-12-01";
             SaveDaoImpl instance = new SaveDaoImpl(createJdbcTemplate(dbName));
             //建立測試資料
             instance.createTable(tableName);
@@ -237,7 +237,7 @@ public class SaveDaoImplTest {
         List<String> result = new ArrayList<>();
         LocalDate e = s.plusMonths(1);
         do {
-            result.add(MinguoDate.from(s).format(DateTimeFormatter.ofPattern("yyy/MM/dd")));
+            result.add(MinguoDate.from(s).format(DateTimeFormatter.ofPattern("y-MM-dd")));
             s = s.plusDays(1);
         } while (s.isBefore(e));
         return result;

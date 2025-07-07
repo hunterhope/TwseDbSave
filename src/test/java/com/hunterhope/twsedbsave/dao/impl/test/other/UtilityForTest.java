@@ -51,7 +51,7 @@ public class UtilityForTest {
     
     private static StockEveryDayInfo createRandomStockEveryDayInfo(MinguoDate md, Random r) {
         StockEveryDayInfo stockEveryDayInfo = new StockEveryDayInfo();
-        stockEveryDayInfo.setDate(md.format(DateTimeFormatter.ofPattern("yyy/MM/dd")));
+        stockEveryDayInfo.setDate(md.format(DateTimeFormatter.ofPattern("y-MM-dd")));
         stockEveryDayInfo.setOpen(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
         stockEveryDayInfo.setHight(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));
         stockEveryDayInfo.setLow(String.format("%.2f", r.nextDouble(0.1, 1.0) * 100));

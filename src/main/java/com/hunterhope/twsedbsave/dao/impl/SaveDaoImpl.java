@@ -40,7 +40,7 @@ public class SaveDaoImpl implements SaveDao {
                     ps.setString(1, info.getDate());
                     ps.setString(2, info.getVolume());
                     ps.setString(3, info.getOpen());
-                    ps.setString(4, info.getHight());
+                    ps.setString(4, info.getHigh());
                     ps.setString(5, info.getLow());
                     ps.setString(6, info.getClose());
                     ps.setString(7, info.getPriceDif());
@@ -70,7 +70,7 @@ public class SaveDaoImpl implements SaveDao {
         String saveYYMMDD = data.get(0).getDate();
         MinguoDate md = MinguoDate.from(new StringDateToLocalDateUS().change(saveYYMMDD).withDayOfMonth(1));
         //查詢資料庫此月份資料出來
-        List<String> dbDates = queryDates(tableName, md.format(DateTimeFormatter.ofPattern("y/MM/dd")));
+        List<String> dbDates = queryDates(tableName, md.format(DateTimeFormatter.ofPattern("y-MM-dd")));
         //排除重複資料
         data.removeIf(e -> dbDates.contains(e.getDate()));
     }
@@ -78,7 +78,7 @@ public class SaveDaoImpl implements SaveDao {
     @Override
     public void createTable(String tableName) throws SQLException {
         try {
-            String sql = "CREATE TABLE IF NOT EXISTS %s (date TEXT,volume TEXT NOT NULL,open TEXT NOT NULL,hight TEXT NOT NULL,low TEXT NOT NULL,close TEXT NOT NULL,price_dif TEXT NOT NULL,PRIMARY KEY(date))";
+            String sql = "CREATE TABLE IF NOT EXISTS %s (date TEXT,volume TEXT NOT NULL,open TEXT NOT NULL,high TEXT NOT NULL,low TEXT NOT NULL,close TEXT NOT NULL,price_dif TEXT NOT NULL,PRIMARY KEY(date))";
             jdbcTemplate.execute(String.format(sql, tableName));
         } catch (Exception ex) {
             throw new SQLException(ex);
