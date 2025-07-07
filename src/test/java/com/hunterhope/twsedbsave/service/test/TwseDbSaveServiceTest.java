@@ -83,7 +83,7 @@ public class TwseDbSaveServiceTest {
         Mockito.verify(saveDao, Mockito.times(times)).save(Mockito.any(), Mockito.any());
     }
 
-    private void verifyWaitClockAction(int i) {
+    private void verifyWaitClockAction(int i) throws InterruptedException {
         Mockito.verify(waitClock, Mockito.times(i)).waitForSecurity(Mockito.anyInt(), Mockito.anyInt());
     }
 
@@ -181,7 +181,7 @@ public class TwseDbSaveServiceTest {
         UrlAndQueryString noDataQueryString = new UrlAndQueryString("https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY");
         noDataQueryString.addParam("stockNo", stockId);
         noDataQueryString.addParam("response", "json");
-        noDataQueryString.addParam("date", "202312");
+        noDataQueryString.addParam("date", "20231223");
         TwseDbSaveService instance = new TwseDbSaveService(jrs, saveDao, waitClock);
         //模擬依賴行為
         mock_request_hasData();
@@ -239,7 +239,7 @@ public class TwseDbSaveServiceTest {
         UrlAndQueryString noDataQueryString = new UrlAndQueryString("https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY");
         noDataQueryString.addParam("stockNo", stockId);
         noDataQueryString.addParam("response", "json");
-        noDataQueryString.addParam("date", "202401");
+        noDataQueryString.addParam("date", "20240130");
         mock_request_hasData();
         mock_request_noData(noDataQueryString);
         mock_db_latestDate("112/12/23");
@@ -279,7 +279,7 @@ public class TwseDbSaveServiceTest {
         UrlAndQueryString noDataQueryString = new UrlAndQueryString("https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY");
         noDataQueryString.addParam("stockNo", stockId);
         noDataQueryString.addParam("response", "json");
-        noDataQueryString.addParam("date", YearMonth.now().format(DateTimeFormatter.ofPattern("yyyyMM")));
+        noDataQueryString.addParam("date", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
         mock_request_noData(noDataQueryString);
         //跑起來
         Map<String, String> result = instance.crawlLatestNoSave(stockId);

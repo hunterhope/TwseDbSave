@@ -49,7 +49,7 @@ public class TwseDbSaveService {
     private final String TWSE_STOCK_PRICE_BASE_URL = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY";//?date=20240331&stockNo=2323&response=json
     private final WaitClock waitClock;
     private final StringDateToLocalDateUS sdToLdUS;
-    private final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMM");
+    private final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     public TwseDbSaveService() {
         this.jrs = new JsonRequestService();
@@ -68,6 +68,7 @@ public class TwseDbSaveService {
     /**
      * 加入監聽器.由於內部會有5~10秒延遲,可收到目前更新到哪裡.<br>
      * 當你不使用時記得要移除.
+     *
      * @param listener
      */
     public void addListener(StepListener listener) {
@@ -78,6 +79,7 @@ public class TwseDbSaveService {
 
     /**
      * 移除監聽器.當你不使用時記得要移除,不然有可能造成記憶體洩漏(該回收沒有被回收).
+     *
      * @param listener
      */
     public void removeListener(StepListener listener) {
@@ -108,7 +110,7 @@ public class TwseDbSaveService {
      * @throws NotMatchDataException
      * 查詢回來如果沒有符合的資料，有可能是此股票代號錯誤，或沒有該股票本月的交易紀錄，需要使用者自己處理
      */
-    public void crawl(String stockId, LocalDate stateDate, int months) throws TwseDbSaveException, NotMatchDataException {
+    public void crawl(String stockId, LocalDate stateDate, int months) throws TwseDbSaveException, NotMatchDataException, InterruptedException {
         crawlHelper(stockId, stateDate, months, true);
     }
 
@@ -120,9 +122,9 @@ public class TwseDbSaveService {
      * @throws TwseDbSaveException
      * @throws NotMatchDataException
      */
-    public Map<String, String> crawlLatestNoSave(String stockId) throws TwseDbSaveException, NotMatchDataException {
-        List<StockEveryDayInfo> data = crawlHelper(stockId,LocalDate.now(),2,false);
-        
+    public Map<String, String> crawlLatestNoSave(String stockId) throws TwseDbSaveException, NotMatchDataException, InterruptedException {
+        List<StockEveryDayInfo> data = crawlHelper(stockId, LocalDate.now(), 2, false);
+
         StockEveryDayInfo latestInfo = data.get(data.size() - 1);
         return Map.of("date", latestInfo.getDate(),
                 "volume", latestInfo.getVolume(),
@@ -134,9 +136,9 @@ public class TwseDbSaveService {
         );
     }
 
-    private List<StockEveryDayInfo> crawlHelper(String stockId, LocalDate startDate, int months, boolean saveDb) throws TwseDbSaveException, NotMatchDataException {
+    private List<StockEveryDayInfo> crawlHelper(String stockId, LocalDate startDate, int months, boolean saveDb) throws TwseDbSaveException, NotMatchDataException, InterruptedException {
         String tableName = combinTableName(stockId);
-        List<StockEveryDayInfo> data=List.of();
+        List<StockEveryDayInfo> data = List.of();
         UrlAndQueryString qs = createUrlAndQueryString(stockId);
         int lastTimeLoop = months - 1;
         String tempDate;
@@ -148,12 +150,13 @@ public class TwseDbSaveService {
             try {
                 //上網爬資料
                 OneMonthPrice omp = jrs.getData(qs, OneMonthPrice.class);
+                 notifyStep(new StepInfo(stockId, tempDate + " 抓取的資料:"+omp));
                 //轉換成資料庫表格形式
                 data = omp.convertToStockEveryDayInfo();
                 if (saveDb) {//存入資料庫
                     saveDao.save(tableName, data);
                     hasSaveDb = true;
-                } else if(!data.isEmpty()){
+                } else if (!data.isEmpty()) {
                     break;
                 }
             } catch (NoInternetException | ServerMaintainException | DataClassFieldNameErrorException | ResponseEmptyException ex) {
@@ -189,10 +192,11 @@ public class TwseDbSaveService {
     /**
      * 自動更新歷史資料，到抓不到資料<br>
      * 使用此方法要自己確認資料表已經存在<br>
+     *
      * @param stockId
      * @throws TwseDbSaveException
      */
-    public void updateHistory(String stockId) throws TwseDbSaveException {
+    public void updateHistory(String stockId) throws TwseDbSaveException, InterruptedException {
         updateStructure(() -> {
             //查詢出最後一筆資料日期(原則上每次抓取資料都是一個月一個月的)
             LocalDate lastDate = queryLastDate(stockId);
@@ -202,7 +206,7 @@ public class TwseDbSaveService {
                 notifyStep(new StepInfo(stockId, lastDate.format(dateFormat) + "月份資料已存入資料庫,查詢進入安全等待時間5~10秒"));
                 lastDate = lastDate.minusMonths(1);
                 waitClock.waitForSecurity(5, 11);
-            } while (true);
+            } while (!Thread.currentThread().isInterrupted());
         });
     }
 
@@ -216,11 +220,12 @@ public class TwseDbSaveService {
 
     /**
      * 方便測試用,建議使用updateToLatest(String stockId) 使用此方法要自己確認資料表已經存在<br>
+     *
      * @param stockId
      * @param nowDate
      * @throws TwseDbSaveException
      */
-    public void updateToLatest(String stockId, LocalDate nowDate) throws TwseDbSaveException {
+    public void updateToLatest(String stockId, LocalDate nowDate) throws TwseDbSaveException, InterruptedException {
         updateStructure(() -> {
             //取得資料庫內最新紀錄日期
             LocalDate dbLatestDate = queryLatestDate(stockId);
@@ -231,7 +236,7 @@ public class TwseDbSaveService {
 
     }
 
-    private void updateStructure(UpdateAction action) throws TwseDbSaveException {
+    private void updateStructure(UpdateAction action) throws TwseDbSaveException, InterruptedException {
         try {
             action.run();
         } catch (NotMatchDataException ex) {
@@ -244,16 +249,17 @@ public class TwseDbSaveService {
     /**
      * 自動更新到最新資料<br>
      * 使用此方法要自己確認資料表已經存在<br>
+     *
      * @param stockId
      * @throws TwseDbSaveException
      */
-    public void updateToLatest(String stockId) throws TwseDbSaveException {
+    public void updateToLatest(String stockId) throws TwseDbSaveException, InterruptedException {
         updateToLatest(stockId, LocalDate.now());
     }
 
     private interface UpdateAction {
 
-        void run() throws NotMatchDataException, SQLException, TwseDbSaveException;
+        void run() throws NotMatchDataException, SQLException, TwseDbSaveException, InterruptedException;
     }
 
 }
