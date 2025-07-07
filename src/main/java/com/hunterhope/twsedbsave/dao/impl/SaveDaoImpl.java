@@ -70,7 +70,7 @@ public class SaveDaoImpl implements SaveDao {
         String saveYYMMDD = data.get(0).getDate();
         MinguoDate md = MinguoDate.from(new StringDateToLocalDateUS().change(saveYYMMDD).withDayOfMonth(1));
         //查詢資料庫此月份資料出來
-        List<String> dbDates = queryDates(tableName, md.format(DateTimeFormatter.ofPattern("yyy/MM/dd")));
+        List<String> dbDates = queryDates(tableName, md.format(DateTimeFormatter.ofPattern("y/MM/dd")));
         //排除重複資料
         data.removeIf(e -> dbDates.contains(e.getDate()));
     }
@@ -110,6 +110,7 @@ public class SaveDaoImpl implements SaveDao {
         try {
             String endYYMMDD = new StringBuffer(yymmdd).replace(yymmdd.length() - 2, yymmdd.length(), "31").toString();
             String sql = "SELECT date FROM %s WHERE date >= '%s' AND date <= '%s';";
+            System.out.println("sql="+String.format(sql, tableName, yymmdd, endYYMMDD));
             return jdbcTemplate.queryForList(String.format(sql, tableName, yymmdd, endYYMMDD), String.class);
         } catch (Exception ex) {
             throw new SQLException(ex);

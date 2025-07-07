@@ -31,7 +31,7 @@ public class StockEveryDayInfo {
     }
 
     public String getDate() {
-        return date;
+        return date.trim();
     }
 
     public void setDate(String date) {

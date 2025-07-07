@@ -49,7 +49,7 @@ public class TwseDbSaveService {
     private final String TWSE_STOCK_PRICE_BASE_URL = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY";//?date=20240331&stockNo=2323&response=json
     private final WaitClock waitClock;
     private final StringDateToLocalDateUS sdToLdUS;
-    private final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yMMdd");
 
     public TwseDbSaveService() {
         this.jrs = new JsonRequestService();
