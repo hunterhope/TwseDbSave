@@ -259,4 +259,12 @@ public class TwseDbSaveService {
         void run() throws NotMatchDataException, SQLException, TwseDbSaveException, InterruptedException;
     }
 
+    public void saveUserInput(String stockId,StockEveryDayInfo input){
+        String tableName = combinTableName(stockId);
+        try {
+            saveDao.save(tableName, List.of(input));
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 }
